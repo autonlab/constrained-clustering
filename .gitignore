@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Ignore datasets
+data_files/*.gz
+
+# Ignore results
+result/*.pickle
