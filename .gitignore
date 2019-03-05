@@ -108,3 +108,6 @@ data_files/*.gz
 
 # Ignore results
 result/*.pickle
+
+# Ignore kernels
+kernels/*
