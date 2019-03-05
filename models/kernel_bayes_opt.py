@@ -90,7 +90,6 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             indices = np.array([best_i] + [int(i) for i in baysian_beta[kernel_components:]])
             weights = baysian_beta[:kernel_components]
             weights /= weights.sum()
-            print(indices, weights)
 
             # Compute new kernel
             kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
@@ -104,6 +103,8 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             kta_score.append(compute_KTA(observed_constraint, constraint_matrix))
 
             print_verbose("Step {}".format(step), verbose, level = 1)
+            print_verbose("\t Kernels  : {}".format(indices), verbose, level = 1)
+            print_verbose("\t Weights  : {}".format(weights), verbose, level = 1)
             print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
         return - np.array(kta_score).reshape((-1, 1))
     
