@@ -87,9 +87,10 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             step += 1
 
             # Constraints are return in same order than space
-            indices = np.array([best_i] + [int(i) for i in baysian_beta[:kernel_components]])
-            weights = baysian_beta[kernel_components:]
+            indices = np.array([best_i] + [int(i) for i in baysian_beta[kernel_components:]])
+            weights = baysian_beta[:kernel_components]
             weights /= weights.sum()
+            print(indices, weights)
 
             # Compute new kernel
             kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
@@ -106,18 +107,18 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
         return - np.array(kta_score).reshape((-1, 1))
     
-    # Use of the different kernels 
-    # var1 = 4 means that the baysian optim uses the 4 th kernel
-    space = [  {'name': 'var_{}'.format(j), 
-                'type': 'discrete', 
-                'domain': np.array([i for i in range(len(kernels)) if i != best_i])}
-            for j in range(1, kernel_components)]
     # Weights on the different kernels
     # var1 = 0.5 means that the baysian optim puts a weight of 0.5 on the 4th kernel
-    space += [ {'name': 'var_{}'.format(j), 
+    space =  [ {'name': 'var_{}'.format(j), 
                 'type': 'continuous', 
                 'domain': (0, 1.)}
             for j in range(kernel_components)]
+    # Use of the different kernels 
+    # var1 = 4 means that the baysian optim uses the 4 th kernel
+    space += [ {'name': 'var_{}'.format(j), 
+                'type': 'discrete', 
+                'domain': np.array([i for i in range(len(kernels)) if i != best_i])}
+            for j in range(1, kernel_components)]
     # It provides a weight for kernel_components kernels with enforcing to use the
     # one that performs the best at first (var0 contains only its weight)
 
