@@ -81,7 +81,7 @@ def select_parameters(kernellist, data, verbose, force, n_jobs):
 
     return parameters_list
 
-def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs = config.processor, save_path = config.kerneldir):
+def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs = 1, save_path = config.kerneldir):
     """
         Computes the different kernels on the data and save them
         Autoselection of the hyperparameters using Median heuristic
@@ -145,7 +145,7 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs 
 
     return names, kernels
 
-def normalize_and_check_kernels(names, kernels, number_cluster, normalize, check_method = "pos_def", clip = False, verbose = 0, n_jobs = config.processor):
+def normalize_and_check_kernels(names, kernels, number_cluster, normalize, check_method = "pos_def", clip = False, verbose = 0, n_jobs = 1):
     """
         Normalize the given kernels and verify their positiveness
         
