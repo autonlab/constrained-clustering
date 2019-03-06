@@ -189,11 +189,11 @@ def normalize_and_check_kernels(names, kernels, number_cluster, normalize, check
             test = True
             
         if test:
-            print_verbose("Add: {}".format(name), verbose)
+            print_verbose("Added: {}".format(name), verbose, level = 1)
             norm_names.append(name)
             norm_kernels.append(ker)
         else:
-            print_verbose("NOT PSD: {}".format(name), verbose)
+            print_verbose("NOT added: {}".format(name), verbose, level = 1)
 
     return norm_names, norm_kernels
 
@@ -315,4 +315,4 @@ def is_trivial(x, threshold = 0.6):
         Returns:
             Bool -- True if non trivial
     """
-    return np.all(~np.isnan(x)) and np.all(x.diagonal() >= 0) and x.mean()/np.diagonal(x).mean() < threshold
+    return np.all(~np.isnan(x)) and np.all(x.diagonal() >= 0) and (np.diagonal(x).mean() > 0) and (x.mean() / np.diagonal(x).mean() < threshold)
