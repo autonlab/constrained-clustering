@@ -1,0 +1,3 @@
+[submodule "KernelConstrainedKmeans"]
+	path = KernelConstrainedKmeans
+	url = https://github.com/Jeanselme/KernelConstrainedKmeans.git

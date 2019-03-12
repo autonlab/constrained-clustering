@@ -6,6 +6,7 @@ import numpy as np
 from utils import print_verbose
 from GPyOpt.methods import BayesianOptimization
 from models.farthest_kmeans import Initialization, kernelKmeans
+from KernelConstrainedKmeans.kckmeans import kernelConstrainedKmeans
 
 def compute_KTA(A, B):
     """
@@ -41,7 +42,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             verbose {int} -- Level of verbosity (default: {0} -- No verbose)
 
         Returns:
-            Assignation of length n
+            Assignation of length n, Assignation with enforced constraints
     """
     if kernel_components >= len(kernels):
         print_verbose("Reduce combiantions to the total number of kernel", verbose)
@@ -69,8 +70,8 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
 
     # We put these global variables to not recompute the assignation
     # And also to overcome the randomness of the kmeans step
-    global assignations, step
-    assignations, step = {}, 0
+    global assignations, kernelsBeta, step
+    assignations, kernelsBeta, step = {}, {}, 0
     def objective_KTA_sparse(subspace):
         """
             Computes the KTA for the combinations of kernels implied by
@@ -81,31 +82,37 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
             Returns:
                 [type] -- [description]
         """
-        global assignations, step
+        global assignations, kernelsBeta, step
         kta_score = []
         for baysian_beta in subspace:
             step += 1
-
             # Constraints are return in same order than space
             indices = np.array([best_i] + [int(i) for i in baysian_beta[kernel_components:]])
             weights = baysian_beta[:kernel_components]
-            weights /= weights.sum()
 
-            # Compute new kernel
-            kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
-            
-            # Computation assignation
-            assignment = initializer.farthest_initialization(kernel, classes)
-            assignations[step] = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
-            
-            # Computation score on observed constraints
-            observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
-            kta_score.append(compute_KTA(observed_constraint, constraint_matrix))
+            if weights.sum() == 0:
+                # Avoid case where all weight are null
+                kta_score.append(- np.inf)
+            else:
+                weights /= weights.sum()
 
-            print_verbose("Step {}".format(step), verbose, level = 1)
-            print_verbose("\t Kernels  : {}".format(indices), verbose, level = 1)
-            print_verbose("\t Weights  : {}".format(weights), verbose, level = 1)
-            print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
+                # Compute new kernel
+                kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
+                kernelsBeta[step] = kernel
+                
+                # Computation assignation
+                assignment = initializer.farthest_initialization(kernel, classes)
+                assignations[step] = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
+                
+                # Computation score on observed constraints
+                observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
+                kta_score.append(compute_KTA(observed_constraint, constraint_matrix))
+
+                print_verbose("Step {}".format(step), verbose, level = 1)
+                print_verbose("\t Kernels  : {}".format(indices), verbose, level = 1)
+                print_verbose("\t Weights  : {}".format(weights), verbose, level = 1)
+                print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
+
         return - np.array(kta_score).reshape((-1, 1))
     
     # Weights on the different kernels
@@ -128,5 +135,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
         domain = space)         # Domain to explore
     
     myBopt.run_optimization(max_iter = bayes_iter)
-    
-    return assignations[np.argmin(myBopt.Y)]
+
+    kernel = kernelsBeta[np.argmin(myBopt.Y)]
+    initialization = initializer.farthest_initialization(kernel, classes)
+    return assignations[np.argmin(myBopt.Y)], kernelConstrainedKmeans(kernel, initialization, constraint_matrix)
