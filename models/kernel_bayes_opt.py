@@ -75,17 +75,10 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
     def objective_KTA_sparse(subspace):
         """
             Computes the KTA for the combinations of kernels implied by
-        
-            Arguments:
-                x {[type]} -- [description]
-            
-            Returns:
-                [type] -- [description]
         """
         global assignations, kernelsBeta, step
         kta_score = []
         for baysian_beta in subspace:
-            step += 1
             # Constraints are return in same order than space
             indices = np.array([best_i] + [int(i) for i in baysian_beta[kernel_components:]])
             weights = baysian_beta[:kernel_components]
@@ -112,6 +105,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
                 print_verbose("\t Kernels  : {}".format(indices), verbose, level = 1)
                 print_verbose("\t Weights  : {}".format(weights), verbose, level = 1)
                 print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
+            step += 1
 
         return - np.array(kta_score).reshape((-1, 1))
     
@@ -136,6 +130,6 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
     
     myBopt.run_optimization(max_iter = bayes_iter)
 
-    kernel = kernelsBeta[np.argmin(myBopt.Y)]
+    kernel = kernelsBeta[np.nanargmin(myBopt.Y)]
     initialization = initializer.farthest_initialization(kernel, classes)
-    return assignations[np.argmin(myBopt.Y)], kernelConstrainedKmeans(kernel, initialization, constraint_matrix)
+    return assignations[np.nanargmin(myBopt.Y)], kernelConstrainedKmeans(kernel, initialization, constraint_matrix)
