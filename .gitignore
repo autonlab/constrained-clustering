@@ -110,4 +110,4 @@ data_files/*.gz
 result/*.pickle
 
 # Ignore kernels
-kernels/*
+kernel_files/*
