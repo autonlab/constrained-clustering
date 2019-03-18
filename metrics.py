@@ -21,7 +21,8 @@ def evalCluster(predictions, labelGT):
     cluster_metric["Adjuster Mutual Info"] = metrics.adjusted_mutual_info_score(labelGT, predictions)  
     cluster_metric["Normalized Mutual Info"] = metrics.normalized_mutual_info_score(labelGT, predictions)  
     cluster_metric["Fowlkes Mallows"] = metrics.fowlkes_mallows_score(labelGT, predictions)
-    return cluster_metric            
+    cluster_metric["FScore"] = fScore(labelGT, predictions)
+    return cluster_metric
 
 def evalSplit(predictions, labelGT, trainIndices):
     """
@@ -40,3 +41,19 @@ def evalSplit(predictions, labelGT, trainIndices):
     return {"all":      evalCluster(predictions, labelGT), 
             "test":     evalCluster(predictions[testIndices], labelGT[testIndices]), 
             "train":    evalCluster(predictions[trainIndices], labelGT[trainIndices])}
+
+def fScore(predictions, labelGT):
+    """
+        Computes the f score for the observed constraint
+    
+        Arguments:
+            predictions {Array int} -- Results of the clustering algo
+            labelGT {Array int} -- Ground truth label
+        
+        Returns:
+            F score {float}
+    """
+    observed = 2 * np.equal.outer(predictions, predictions) - 1
+    constraint = 2 * np.equal.outer(labelGT, labelGT) - 1
+    selection = np.tril_indices_from(constraint, 1)
+    return metrics.f1_score(constraint[selection], observed[selection])

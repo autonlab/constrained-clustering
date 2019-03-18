@@ -107,7 +107,7 @@ venv.bak/
 data_files/*.gz
 
 # Ignore results
-result/*.pickle
+result/*
 
 # Ignore kernels
 kernel_files/*
