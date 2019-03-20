@@ -19,10 +19,10 @@ def compute_KTA(A, B):
         Returns:
             KTA {float}
     """
-    return np.dot(A.ravel(),B.ravel())/np.sqrt(np.dot(A.ravel(),A.ravel())*np.dot(B.ravel(),B.ravel()))
+    return np.dot(A.ravel(),B.ravel())
 
 # TODO: Change this function to an object that has a fit and transform and labels attributes
-def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_components = 3, bayes_iter = 1000, verbose = 0):
+def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_components = 3, bayes_iter = 1000, verbose = 0):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the KTA score on the observed constraints computed with Kmeans
@@ -30,13 +30,12 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
         Arguments:
             kernels {List Array n * n} -- List of the precomputed kernels
             classes {int} -- Number of clusters to form
-
-        Keyword Arguments:
-            kernel_components {int} -- Number of kernel to combine simultaneously (default: {3})
             constraint_matrix {Array n * n} -- Constraint matrix with value between -1 and 1 
                 Positive values represent must link points
                 Negative values represent should not link points
-                (default: {None} - No Constraint)
+
+        Keyword Arguments:
+            kernel_components {int} -- Number of kernel to combine simultaneously (default: {3})
             bayes_iter {int} -- Number of iteration to compute on the space (default: {1000})
                 NB: Higher this number slower is the algorithm
             verbose {int} -- Level of verbosity (default: {0} -- No verbose)
@@ -54,7 +53,6 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
     # Computes initial score of each kernels
     kernel_kta = np.zeros(len(kernels))
     for i, kernel in enumerate(kernels):
-        print_verbose("Initial assignation kernel {}".format(i), verbose)
         # Farthest assignation given current distance
         assignment = initializer.farthest_initialization(kernel, classes)
 
@@ -62,6 +60,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix = None, kernel_c
         assignment = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
         observed_constraint = 2 * np.equal.outer(assignment, assignment) - 1.0
         kernel_kta[i] = compute_KTA(observed_constraint, constraint_matrix)
+        print_verbose("Initial assignation kernel {} - KTA {}".format(i, kernel_kta[i]), verbose)
 
     # Select best kernel
     best_i = np.argmax(kernel_kta)
