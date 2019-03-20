@@ -56,5 +56,5 @@ def fScore(predictions, labelGT):
     observed = 2 * np.equal.outer(predictions, predictions) - 1
     constraint = 2 * np.equal.outer(labelGT, labelGT) - 1
     selection = np.tril_indices_from(constraint, 1)
-    selection = selection[constraint[selection] != 0]
+    selection = selection[np.array(constraint[selection] != 0)]
     return metrics.f1_score(constraint[selection], observed[selection])
