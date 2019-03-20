@@ -19,52 +19,31 @@ def completion_constraint(constraint_matrix, force = False):
     assert np.array_equal(constraint_matrix.T, constraint_matrix)
     # Transitive closure on positive constraint
     # Adaptated Floyd–Warshall algorithm
-    mask = np.where(constraint_matrix > 0, constraint_matrix, np.zeros_like(constraint_matrix))
+    positive = np.where(constraint_matrix > 0, constraint_matrix, np.zeros_like(constraint_matrix))
+    negative = np.where(constraint_matrix < 0, constraint_matrix, np.zeros_like(constraint_matrix))
     N = constraint_matrix.shape[0]
     for k in range(N):
         for i in range(N):
             for j in range(i):
                 # Improved version for going faster
-                value = mask[i, k] * mask[k, j]
-                if mask[i, j] < value:
-                    mask[i, j] = value
-                    mask[j, i] = value
+                value = positive[i, k] * positive[k, j]
+                if positive[i, j] < value:
+                    positive[i, j] = value
+                    positive[j, i] = value
+
+                value = positive[i, k] * negative[k, j] + negative[i, k] * positive[k, j]
+                if negative[i, j] > value:
+                    negative[i, j] = value
+                    negative[j, i] = value
 
     if not(force):
         # Verify that no opposite constraint
-        assert np.sum(np.multiply(mask, constraint_matrix) < 0) == 0, "Transitive Closure breaks constraint (use force option to erase the less sure constraint)"
-    # Take the most confident constraint
-    result = np.where(mask >= np.abs(constraint_matrix), mask, constraint_matrix)
-    
-    return result
+        assert np.sum(np.multiply(positive, constraint_matrix) < 0) == 0, "Transitive Closure breaks constraint (use force option to erase the less sure constraint)"
+        assert np.sum(np.multiply(negative, constraint_matrix) < 0) == 0, "Transitive Closure breaks constraint (use force option to erase the less sure constraint)"
 
-def completion_constraint_approx(constraint_matrix, force = False, level = 3):
-    """
-        Complete the constraints matrix by
-        forcing consistency and transitive closure on level 3
-    
-        Arguments:
-            constraint_matrix {sparse array} -- Constrained on data points
-                +1 => Constraint the points to be in the same cluster
-                -1 => Constraint the points to be in separate clusters
-        
-        Returns:
-            Completed constraint matrix {sparse array}
-    """
-    assert np.array_equal(constraint_matrix.T, constraint_matrix)
-    # Transitive closure on positive constraint
-    # Adaptated Floyd–Warshall algorithm
-    mask = np.where(constraint_matrix > 0, constraint_matrix, np.zeros_like(constraint_matrix))
-    result = mask.copy()
-    for i in range(level):
-        result = np.max(result[:,:,None] * mask, axis = 1)
-    np.fill_diagonal(result, 0)
-
-    if not(force):
-        # Verify that no opposite constraint
-        assert np.sum(np.multiply(result, constraint_matrix) < 0) == 0, "Transitive Closure breaks constraint (use force option to erase the less sure constraint)"
     # Take the most confident constraint
-    result = np.where(result >= np.abs(constraint_matrix), result, constraint_matrix)
+    result = np.where(positive >= np.abs(constraint_matrix), positive, constraint_matrix)
+    result = np.where(np.abs(negative) >= np.abs(result), negative, result)
     
     return result
 
