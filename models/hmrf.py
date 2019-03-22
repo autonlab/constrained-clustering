@@ -133,7 +133,7 @@ class HMRFkmeans_Error:
         idxs_cannotl_violated = np.where(np.multiply(comparison_assignation < 0, self.not_link_idxs))
         
         if idxs_mustl_violated[0].size > 0:
-            res += (1.1-np.einsum('ij,ij->i', Xproj[self.idxs_mustl_violated[0]], Xproj[self.idxs_mustl_violated[1]])).sum()
+            res += (1.1-np.einsum('ij,ij->i', Xproj[idxs_mustl_violated[0]], Xproj[idxs_mustl_violated[1]])).sum()
         if idxs_cannotl_violated[0].size > 0: 
             res += (2.0-(1.0-np.einsum('ij,ij->i', Xproj[idxs_cannotl_violated[0]], Xproj[idxs_cannotl_violated[1]]))).sum()
         return float(res)
@@ -159,7 +159,7 @@ def hmrf_kmeans_cosine(data, k, constraint_matrix,
                         verbose = 0, a_init = None, par_kernel_jobs = 1,
                         init_args = {}, convergence_args = {} ,
                         solveroptions={'disp': None, 'iprint': -1, 'gtol': 1e-07, 'eps': 1e-08,
-                                       'maxiter': 10, 'ftol': 2.220446049250313e-09, 'maxcor': 10,
+                                       'maxiter': 200, 'ftol': 2.220446049250313e-09, 'maxcor': 10,
                                        'maxfun': 15000}):
     """
         Constrained  K-Means with parametrized cosine distance
