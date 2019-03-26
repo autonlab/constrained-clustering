@@ -6,7 +6,7 @@ import numpy as np
 from utils import print_verbose
 from GPyOpt.methods import BayesianOptimization
 from models.farthest_kmeans import Initialization, kernelKmeans
-from KernelConstrainedKmeans.kckmeans import kernelConstrainedKmeans
+from KernelConstrainedKmeans.wkckmeans import weightedKernelConstrainedKmeans
 
 def compute_KTA(A, B):
     """
@@ -131,4 +131,4 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
 
     kernel = kernelsBeta[np.nanargmin(myBopt.Y)]
     initialization = initializer.farthest_initialization(kernel, classes)
-    return assignations[np.nanargmin(myBopt.Y)], kernelConstrainedKmeans(kernel, initialization, constraint_matrix)
+    return assignations[np.nanargmin(myBopt.Y)], weightedKernelConstrainedKmeans(kernel, initialization, constraint_matrix)
