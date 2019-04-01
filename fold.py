@@ -7,12 +7,12 @@ from constraint import random_indices
 from pmlb import classification_dataset_names, fetch_data
 
 def createFold(dname, path = config.result, number_fold = 10, 
-    min_points = 100, max_points = 4000, verbose = 0):
+    min_points = 100, max_points = 3000, verbose = 0):
     """
         Creates fold for dataset: a file is created at the given path
         In which the train index is saved for each fold
 
-        The training use 50% of the data and it is randomly assigned
+        The training use 25% of the data and it is randomly assigned
     
         Arguments:
             dname {String} -- Dataset name
@@ -21,7 +21,7 @@ def createFold(dname, path = config.result, number_fold = 10,
             path {String} -- Path where to save the data
             number_fold {int} -- Number of fold (default: {10})
             min_points {int} -- Minimal points in dataset (default: {100})
-            max_points {int} -- Maximal points in dataset (default: {4000})
+            max_points {int} -- Maximal points in dataset (default: {3000})
             verbose {int} -- Verbose level (default: {0})
     """
     assert dname in classification_dataset_names, "Unknown dataset"
@@ -47,7 +47,7 @@ def createFold(dname, path = config.result, number_fold = 10,
         ## Stratified split
         train_index[fold] = []
         for label, count in zip(labels, counts):
-            lentrain = int(0.5 * count)
+            lentrain = int(0.25 * count)
             index_label = np.argwhere(labelvector == label).flatten()
             train_index[fold].extend(np.random.choice(index_label, size = lentrain, replace = False).tolist())
 

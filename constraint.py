@@ -2,6 +2,7 @@
     File containing functions linked to the constraint matrix
 """
 import numpy as np
+from tqdm import tqdm
 
 def completion_constraint(constraint_matrix, force = False):
     """
@@ -12,7 +13,7 @@ def completion_constraint(constraint_matrix, force = False):
             constraint_matrix {sparse array} -- Constrained on data points
                 +1 => Constraint the points to be in the same cluster
                 -1 => Constraint the points to be in separate clusters
-        
+
         Returns:
             Completed constraint matrix {sparse array}
     """
@@ -21,10 +22,10 @@ def completion_constraint(constraint_matrix, force = False):
     # Adaptated Floyd–Warshall algorithm
     positive = np.where(constraint_matrix > 0, constraint_matrix, np.zeros_like(constraint_matrix))
     negative = np.where(constraint_matrix < 0, constraint_matrix, np.zeros_like(constraint_matrix))
-    N = constraint_matrix.shape[0]
-    for k in range(N):
-        for i in range(N):
-            for j in range(i):
+    notNull = np.unique(np.argwhere(constraint_matrix != 0))
+    for k in notNull:
+        for end, i in enumerate(notNull):
+            for j in notNull[:end]:
                 # Improved version for going faster
                 value = positive[i, k] * positive[k, j]
                 if positive[i, j] < value:
