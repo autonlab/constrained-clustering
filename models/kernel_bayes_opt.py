@@ -62,6 +62,11 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
         kernel_kta[i] = compute_KTA(observed_constraint, constraint_matrix)
         print_verbose("Initial assignation kernel {} - KTA {}".format(i, kernel_kta[i]), verbose)
 
+        # Stop for perfect clustering
+        if kernel_kta[i] == np.abs(constraint_matrix).sum():
+            print_verbose("Perfect Classification", verbose)
+            return assignment, assignment
+
     # Select best kernel
     best_i = np.argmax(kernel_kta)
     beta_best = np.zeros(len(kernels))
