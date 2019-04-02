@@ -35,6 +35,6 @@ def crossValidation(kernels, classes, constraint_matrix, folds = 5):
         observed_constraint = 2 * np.equal.outer(assignment[i], assignment[i]) - 1.0
         kernel_kta[i] = compute_KTA(observed_constraint, constraint_matrix)
 
-    best_i = np.argmax(kernel_kta)
+    best_i = np.nanargmax(kernel_kta)
     initialization = initializer.farthest_initialization(kernels[best_i], classes)
     return assignment[best_i], weightedKernelConstrainedKmeans(kernels[best_i], initialization, constraint_matrix)

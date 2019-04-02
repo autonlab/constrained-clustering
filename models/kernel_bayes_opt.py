@@ -90,7 +90,6 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
 
                 # Compute new kernel
                 kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
-                kernelsBeta[step] = kernel
                 
                 # Computation assignation
                 assignment = initializer.farthest_initialization(kernel, classes)
@@ -98,7 +97,12 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
                 
                 # Computation score on observed constraints
                 observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
-                kta_score.append(compute_KTA(observed_constraint, constraint_matrix))
+                kta = compute_KTA(observed_constraint, constraint_matrix)
+                kta_score.append(kta)
+
+                # For memory efficiency: Add kernel only if better than before
+                if np.greater_equal(kta, kta_score).all():
+                    kernelsBeta[step] = kernel
 
                 print_verbose("Step {}".format(step), verbose, level = 1)
                 print_verbose("\t Kernels  : {}".format(indices), verbose, level = 1)
