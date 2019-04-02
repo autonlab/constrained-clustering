@@ -79,3 +79,17 @@ def readFold(dname, path = config.result, verbose = 0):
         return None
 
     return pickle.load(open(confFile, 'rb'))
+
+def computedFold(path = config.result, verbose = 0):
+    """
+        Give the list of dataset for which we have fold
+
+        Keyword Arguments:
+            path {String} -- Path where to read the configuration
+
+        Returns:
+            List of fold
+    """
+    files = os.listdir(path)
+    confFiles = [f[:f.index("_fold.pickle")] for f in files if "_fold.pickle" in f]
+    return confFiles
