@@ -159,9 +159,10 @@ class HMRFkmeans_Error:
             res += np.clip(self.dmaxmal-D, 0.0, None).sum()
             
         # add rayleigh prior over A matrix that parameterizes the metric
-        # add logarithm of determinant of A that parameterizes the Mahalanobis distance
-        # and return
-        return float(res)-rayleigh_prior(avec)#+mahalanobis_log_det_a(avec)
+        # Omit logarithm of determinant of A that parameterizes the Mahalanobis distance
+        # it would just encourage smaller values on diagonal, nothing more.
+        # Then return
+        return float(res)-rayleigh_prior(avec)
             
 
     def compute_error_assignment_cosine(self, Xproj, Y, assignation, clusters):
@@ -306,19 +307,19 @@ def hmrf_kmeans(data, k, constraint_matrix,
     if metric == 'cosine':
         bounds = [[ 1.0e-07, 1.0]] * len(avec)  # setting bounds to eps or 0 may create instability in solver.
     else:
-        # introduce upper bound to avoid numerical instability. rayleigh prior should avoid such large values anyway.
         bounds = [[ 1.0e-15, np.infty]] * len(avec)  # setting bounds to eps or 0 may create instability in solver.
-    
+        # pre-estimate dmax
+        if data.shape[0]>500:
+            error.dmaxmal = np.max(euclidean_distances(data[np.random.choice(data.shape[0],500)]))*1.2   
+        else:
+            error.dmaxmal = np.max(euclidean_distances(data))*1.2
     previous, error_current = None, None
     best_error, best_assignation = None, None
 
     ## Error to optimize
     error = HMRFkmeans_Error(data, metric, constraint_matrix)
     
-    if data.shape[0]>500:
-        error.dmaxmal = np.max(euclidean_distances(data[np.random.choice(data.shape[0],500)]))*1.2   
-    else:
-        error.dmaxmal = np.max(euclidean_distances(data[np.random.choice(data.shape[0],500)]))*1.2
+    
 
     ## Assignation
     assignation = Assignment_HMRFkmeans(error,metric)
