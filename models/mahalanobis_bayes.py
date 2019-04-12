@@ -1,14 +1,25 @@
 import numpy as np
 from utils import print_verbose
-from models.kernel_bayes_opt import compute_KTA
+
 from GPyOpt.methods import BayesianOptimization
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import linear_kernel
 from models.farthest_kmeans import Initialization, kernelKmeans
 
-def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0,scale = True):
+def compute_alignment(A, B):
+    """
+        Arguments:
+            A {array n * n} -- a Gram matrix
+            B {array n * n} -- a Gram matrix
+        
+        Returns:
+            score {float}
+    """
+    return np.dot(A.ravel(),B.ravel())
+
+def mahalanobis_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0,scale=True):
     """
         Bayesian optimization on the space of combinasions of the given kernels
-        With maximization of the KTA score on the observed constraints computed with Kmeans
+        With maximization of the constraint satisfaction on the observed constraints computed with constrained Kmeans
 
         Arguments:
             data {Array n * f} -- Data
@@ -30,32 +41,30 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
 
     # Compute the components implied by constrained (without any distance)
     initializer = Initialization(classes, constraint_matrix)
-
-    
     if scale:
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
         data = scaler.fit_transform(data)
     global assignations, step
     assignations, step = {}, 0
-    def objective_KTA_sparse(subspace):
+    def objective(subspace):
         """
-            Computes the KTA for the combinations of kernels implied by
+            Compute constraint satisfaction
         """
         global assignations, step
-        kta_score = []
+        score = []
         for weights_features in subspace:
             if weights_features.sum() == 0:
                 # Avoid case where all weight are null
-                kta_score.append(- np.inf)
+                score.append(- np.inf)
             else:
                 weights_features /= weights_features.sum()
 
                 # Transforms data
                 transformed = np.multiply(data, np.sqrt(weights_features))
 
-                # Compute new cosine
-                kernel = cosine_similarity(transformed)
+                # Compute new pairwise distances
+                kernel = linear_kernel(transformed)
 
                 # Computation assignation
                 assignment = initializer.farthest_initialization(kernel, classes)
@@ -63,14 +72,14 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
                 
                 # Computation score on observed constraints
                 observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
-                kta_score.append(compute_KTA(observed_constraint, constraint_matrix))
+                score.append(compute_alignment(observed_constraint, constraint_matrix))
 
                 print_verbose("Step {}".format(step), verbose, level = 1)
                 print_verbose("\t Alpha  : {}".format(weights_features), verbose, level = 1)
-                print_verbose("\t KTA  : {}".format(kta_score[-1]), verbose)
+                print_verbose("\t Alignment  : {}".format(score[-1]), verbose)
             step += 1
 
-        return - np.array(kta_score).reshape((-1, 1))
+        return - np.array(score).reshape((-1, 1))
     
     # Constraint the scaling of each features to be between 0 and 1
     space =  [ {'name': 'var_{}'.format(j), 
@@ -78,7 +87,7 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
                 'domain': (0, 1.)}
             for j in range(features)]
 
-    myBopt = BayesianOptimization(f = objective_KTA_sparse, 
+    myBopt = BayesianOptimization(f = objective, 
         de_duplication = True,  # Avoids re-evaluating the objective at previous, pending or infeasible locations 
         domain = space)         # Domain to explore
     
