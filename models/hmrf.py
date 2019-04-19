@@ -1,10 +1,10 @@
 from utils import print_verbose
-from models.farthest_kmeans import Initialization
-from scipy.optimize import minimize
-import numpy as np
+from KernelConstrainedKmeans.initialization import Initialization
 
 from sklearn.metrics.pairwise import pairwise_kernels,euclidean_distances
 from sklearn.preprocessing import normalize
+from scipy.optimize import minimize
+import numpy as np
 
 def mahalanobis_log_det_a(avec):
     #The determinant of diag(a1, ..., an) is the product a1...an.
@@ -321,7 +321,7 @@ def hmrf_kmeans(data, k, constraint_matrix,
     else:
         kernel = pairwise_kernels(np.multiply(data, np.sqrt(avec)), metric='linear', n_jobs=par_kernel_jobs)
     
-    assignation_current = Initialization(k, constraint_matrix).farthest_initialization(kernel, k)
+    assignation_current = Initialization(k, constraint_matrix).farthest_initialization(kernel)
     del kernel
     # M step: update centers
     error.update_centers_masks(data, assignation_current)

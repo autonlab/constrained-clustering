@@ -4,22 +4,10 @@
 """
 import numpy as np
 from utils import print_verbose
+from models.kkmeans import kernelKmeans
 from GPyOpt.methods import BayesianOptimization
-from models.farthest_kmeans import Initialization, kernelKmeans
+from KernelConstrainedKmeans.initialization import Initialization
 from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
-
-def compute_KTA(A, B):
-    """
-        Compute Kernel Target Alignment between matrices A and B 
-    
-        Arguments:
-            A {array n * n} -- a Gram matrix
-            B {array n * n} -- a Gram matrix
-        
-        Returns:
-            KTA {float}
-    """
-    return np.dot(A.ravel(),B.ravel())
 
 # TODO: Change this function to an object that has a fit and transform and labels attributes
 def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_components = 3, bayes_iter = 1000, verbose = 0):
@@ -54,12 +42,12 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
     kernel_kta = np.zeros(len(kernels))
     for i, kernel in enumerate(kernels):
         # Farthest assignation given current distance
-        assignment = initializer.farthest_initialization(kernel, classes)
+        assignment = initializer.farthest_initialization(kernel)
 
         # Kmeans step
         assignment = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
         observed_constraint = 2 * np.equal.outer(assignment, assignment) - 1.0
-        kernel_kta[i] = compute_KTA(observed_constraint, constraint_matrix)
+        kernel_kta[i] = np.dot(observed_constraint.ravel(), constraint_matrix.ravel())
         print_verbose("Initial assignation kernel {} - KTA {}".format(i, kernel_kta[i]), verbose)
 
         # Stop for perfect clustering
@@ -97,12 +85,12 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
                 kernel = np.sum(kernels[i] * w for i, w in zip(indices, weights))
                 
                 # Computation assignation
-                assignment = initializer.farthest_initialization(kernel, classes)
+                assignment = initializer.farthest_initialization(kernel)
                 assignations[step] = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
                 
                 # Computation score on observed constraints
                 observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
-                kta = compute_KTA(observed_constraint, constraint_matrix)
+                kta = np.dot(observed_constraint.ravel(), constraint_matrix.ravel())
                 kta_score.append(kta)
 
                 # For memory efficiency: Add kernel only if better than before
@@ -139,7 +127,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
     myBopt.run_optimization(max_iter = bayes_iter)
 
     kernel = kernelsBeta[np.nanargmin(myBopt.Y)]
-    initialization = initializer.farthest_initialization(kernel, classes)
+    initialization = initializer.farthest_initialization(kernel)
     ksckmeans = weightedKernelSoftConstrainedKmeans(kernel, initialization, constraint_matrix)
 
     return assignations[np.nanargmin(myBopt.Y)], ksckmeans

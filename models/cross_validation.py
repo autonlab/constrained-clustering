@@ -1,6 +1,6 @@
 import numpy as np
-from models.farthest_kmeans import Initialization, kernelKmeans
-from models.kernel_bayes_opt import compute_KTA
+from models.kkmeans import kernelKmeans
+from KernelConstrainedKmeans.initialization import Initialization
 from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
 
 def crossValidation(kernels, classes, constraint_matrix, folds = 5):
@@ -28,15 +28,15 @@ def crossValidation(kernels, classes, constraint_matrix, folds = 5):
     kernel_kta, assignment = np.zeros(len(kernels)), {}
     for i, kernel in enumerate(kernels):
         # Farthest assignation given current distance
-        assignment[i] = initializer.farthest_initialization(kernel, classes)
+        assignment[i] = initializer.farthest_initialization(kernel)
 
         # Kmeans step
         assignment[i] = kernelKmeans(kernel, assignment[i], max_iteration = 100)
         observed_constraint = 2 * np.equal.outer(assignment[i], assignment[i]) - 1.0
-        kernel_kta[i] = compute_KTA(observed_constraint, constraint_matrix)
+        kernel_kta[i] = np.dot(observed_constraint.ravel(), constraint_matrix.ravel())
 
     best_i = np.nanargmax(kernel_kta)
-    initialization = initializer.farthest_initialization(kernels[best_i], classes)
+    initialization = initializer.farthest_initialization(kernels[best_i])
     ksckmeans = weightedKernelSoftConstrainedKmeans(kernels[best_i], initialization, constraint_matrix)
 
     return assignment[best_i], ksckmeans
