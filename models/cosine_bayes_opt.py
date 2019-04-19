@@ -5,7 +5,7 @@ from GPyOpt.methods import BayesianOptimization
 from sklearn.metrics.pairwise import cosine_similarity
 from models.farthest_kmeans import Initialization, kernelKmeans
 
-def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0,scale = True):
+def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the KTA score on the observed constraints computed with Kmeans
@@ -31,11 +31,6 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
     # Compute the components implied by constrained (without any distance)
     initializer = Initialization(classes, constraint_matrix)
 
-    
-    if scale:
-        from sklearn.preprocessing import StandardScaler
-        scaler = StandardScaler()
-        data = scaler.fit_transform(data)
     global assignations, step
     assignations, step = {}, 0
     def objective_KTA_sparse(subspace):

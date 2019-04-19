@@ -248,7 +248,7 @@ def convergence_eps(previous, error, iteration, eps=1e-05, maxiteration=100):
 
 def hmrf_kmeans(data, k, constraint_matrix,
                         verbose = 0, a_init = None, par_kernel_jobs = 1,
-                        init_args = {}, convergence_args = {} ,metric='cosine',scale=True,
+                        init_args = {}, convergence_args = {} ,metric='cosine',
                         solveroptions={'disp': None, 'iprint': -1, 'gtol': 1e-07, 'eps': 1e-08,
                                        'maxiter': 200, 'ftol': 2.220446049250313e-09, 'maxcor': 10,
                                        'maxfun': 15000}):
@@ -295,14 +295,10 @@ def hmrf_kmeans(data, k, constraint_matrix,
             avec = a_init
         else:
             raise ValueError("resulting A not psd")
-    
-    #We recommend to always scale
-    if scale:
-        from sklearn.preprocessing import StandardScaler
-        scaler = StandardScaler()
-        data = scaler.fit_transform(data)
-    
+
     iteration = 0
+    ## Error to optimize
+    error = HMRFkmeans_Error(data, metric, constraint_matrix)
     
     if metric == 'cosine':
         bounds = [[ 1.0e-07, 1.0]] * len(avec)  # setting bounds to eps or 0 may create instability in solver.
@@ -315,11 +311,6 @@ def hmrf_kmeans(data, k, constraint_matrix,
             error.dmaxmal = np.max(euclidean_distances(data))*1.2
     previous, error_current = None, None
     best_error, best_assignation = None, None
-
-    ## Error to optimize
-    error = HMRFkmeans_Error(data, metric, constraint_matrix)
-    
-    
 
     ## Assignation
     assignation = Assignment_HMRFkmeans(error,metric)
