@@ -11,6 +11,7 @@ from kernels.data import get_transformation
 import numpy as np
 from scipy.stats import binom
 from sklearn.metrics.pairwise import pairwise_kernels, pairwise_distances, KERNEL_PARAMS,euclidean_distances,manhattan_distances
+from sklearn.kernel_approximation import Nystroem
 from sklearn.preprocessing import KernelCenterer
 from sklearn.utils.extmath import safe_sparse_dot
 from kernels.kernels import *
@@ -81,7 +82,9 @@ def select_parameters(kernellist, data, verbose, force, n_jobs):
 
     return parameters_list
 
-def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs = 1, save_path = config.kerneldir):
+def produce_kernels(dname, kernellist, data, verbose = 0, force = False, 
+    n_jobs = 1, save_path = config.kerneldir,
+    approximation = False, n_components = 150):
     """
         Computes the different kernels on the data and save them
         Autoselection of the hyperparameters using Median heuristic
@@ -130,10 +133,19 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs 
                     pstr = ' '.join(['{} {}'.format(key, value) for key, value in params.items() if value is not None])
                     kname = "{} - {}".format(name + kernel, pstr)
                     names_transformation.append(kname)
-                    kernels_transformation.append(pairwise_kernels(compute_data, metric=kernel, n_jobs=n_jobs, **params))
+
+                    if approximation:
+                        feature_map_nystroem = Nystroem(kernel = kernel, n_components = n_components, **params)
+                        kernels_transformation.append(feature_map_nystroem.fit_transform(compute_data))
+                    else:
+                        kernels_transformation.append(pairwise_kernels(compute_data, metric=kernel, n_jobs=n_jobs, **params))
             else:
                 names_transformation.append(name + kernel)
-                kernels_transformation.append(pairwise_kernels(compute_data, metric=kernel, n_jobs=n_jobs))
+                if approximation:
+                    feature_map_nystroem = Nystroem(kernel = kernel, n_components = n_components)
+                    kernels_transformation.append(feature_map_nystroem.fit_transform(compute_data))
+                else:
+                    kernels_transformation.append(pairwise_kernels(compute_data, metric=kernel, n_jobs=n_jobs))
 
         try:
             np.savez_compressed(path, **{n: k for n, k in zip(names_transformation, kernels_transformation)})
@@ -145,7 +157,8 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False, n_jobs 
 
     return names, kernels
 
-def normalize_and_check_kernels(names, kernels, number_cluster, normalize, check_method = "pos_def", clip = False, verbose = 0, n_jobs = 1):
+def normalize_and_check_kernels(names, kernels, number_cluster, normalize,
+    check_method = "pos_def", clip = False, verbose = 0, n_jobs = 1):
     """
         Normalize the given kernels and verify their positiveness
         
