@@ -7,7 +7,7 @@ from constraint import random_indices
 from pmlb import classification_dataset_names, fetch_data
 
 def createFold(dname, path = config.result, number_fold = 10, 
-    min_points = 100, max_points = 3000, verbose = 0):
+    min_points = 100, verbose = 0):
     """
         Creates fold for dataset: a file is created at the given path
         In which the train index is saved for each fold
@@ -21,7 +21,6 @@ def createFold(dname, path = config.result, number_fold = 10,
             path {String} -- Path where to save the data
             number_fold {int} -- Number of fold (default: {10})
             min_points {int} -- Minimal points in dataset (default: {100})
-            max_points {int} -- Maximal points in dataset (default: {3000})
             verbose {int} -- Verbose level (default: {0})
     """
     assert dname in classification_dataset_names, "Unknown dataset"
@@ -32,9 +31,6 @@ def createFold(dname, path = config.result, number_fold = 10,
 
     if len(labelvector) < min_points:
         print_verbose('Ignored - {}: dataset too small - {} points'.format(dname, len(labelvector)), verbose)
-        return {}
-    if len(labelvector) > max_points:
-        print_verbose('Ignored - {}: dataset too big - {} points'.format(dname, len(labelvector)), verbose)
         return {}
     
     labels, counts = np.unique(labelvector, return_counts = True)
@@ -53,7 +49,7 @@ def createFold(dname, path = config.result, number_fold = 10,
 
         # Compute constraints matrix
         ## Number constraint
-        number_constraint = int(((len(train_index[fold])-1)*len(train_index[fold])/2.))
+        number_constraint = min(int(((len(train_index[fold])-1)*len(train_index[fold])/2.)), 10000)
 
         ## Indices computed only on train part
         constraint_index[fold] = random_indices(train_index[fold], number_constraint)
