@@ -158,7 +158,7 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False,
     return names, kernels
 
 def normalize_and_check_kernels(names, kernels, number_cluster, normalize,
-    check_method = "pos_def", clip = False, verbose = 0, n_jobs = 1):
+    check_method = None, clip = False, verbose = 0, n_jobs = 1):
     """
         Normalize the given kernels and verify their positiveness
         
@@ -233,6 +233,8 @@ def normalize_kernel(kernel, number_cluster, method, clip = False):
         normalized_kernel = normalize_kernel_center_multiplicative(kernel)        
     elif method == "expectation":
         normalized_kernel = normalize_kernel_expectation(kernel, number_cluster)
+    elif method == "approximation":
+        normalized_kernel = normalize_kernel_approximation(kernel)
     else:
         raise ValueError("Method for normalization kernel : {} unknown".format(method))
 
@@ -299,6 +301,27 @@ def normalize_kernel_expectation(kernel, number_cluster):
     denom = kernel.trace() * (1 - np.sum([binom_law.pmf(z)/(z+1) for z in np.arange(N)]))
     binom_law = binom(N-2, 1./number_cluster)
     denom -= (kernel.sum() - kernel.trace()) * np.sum([binom_law.pmf(z)/(z+2) for z in np.arange(N-1)]) / number_cluster
+    return kernel / denom
+
+def normalize_kernel_approximation(kernel, points = 500):
+    """
+        Normalizes an approximated kernel (results from Nystroem)
+
+        Arguments:
+            kernel {n * d Array} -- Nystroem approximation
+            points {int} -- Number of points to use to approximate
+
+        Returns:
+            Normalized kernel
+    """
+    if len(kernel) > points:
+        kernel = kernel[np.random.choice(len(kernel), points, replace=False), :]
+
+    inner = np.abs(safe_sparse_dot(kernel, kernel.T))
+    denom = np.percentile(inner.ravel(), 95) / 2.0
+    if denom < 0.0001:
+        return None
+
     return kernel / denom
 
 def is_pos_def(x):
