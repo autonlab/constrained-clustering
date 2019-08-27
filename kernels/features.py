@@ -198,6 +198,8 @@ def normalize_and_check_kernels(names, kernels, number_cluster, normalize,
                 test = check_method(ker)
             except:
                 test = False
+        elif ker is None:
+            test = False
         else:
             test = True
             
