@@ -2,12 +2,16 @@
     File containing functions linked to the constraint matrix
 """
 import numpy as np
+from numba import jit
 from tqdm import tqdm
+from scipy.sparse import coo_matrix, find
 
 def completion_constraint(constraint_matrix, force = False):
     """
         Complete the constraints matrix by
         forcing consistency and transitive closure
+
+        NB: Matrix will be dense
     
         Arguments:
             constraint_matrix {sparse array} -- Constrained on data points
@@ -17,7 +21,9 @@ def completion_constraint(constraint_matrix, force = False):
         Returns:
             Completed constraint matrix {sparse array}
     """
+    constraint_matrix = constraint_matrix.todense()
     assert np.array_equal(constraint_matrix.T, constraint_matrix)
+
     # Transitive closure on positive constraint
     # Adaptated Floyd–Warshall algorithm
     positive = np.where(constraint_matrix > 0, constraint_matrix, np.zeros_like(constraint_matrix))
@@ -46,7 +52,7 @@ def completion_constraint(constraint_matrix, force = False):
     result = np.where(positive >= np.abs(constraint_matrix), positive, constraint_matrix)
     result = np.where(np.abs(negative) >= np.abs(result), negative, result)
     
-    return result
+    return coo_matrix(result)
 
 def random_constraint(number_points):
     """
@@ -58,11 +64,8 @@ def random_constraint(number_points):
         Returns:
             Array number_points*number_points of -1, 0, 1
     """
-    labelvector = np.random.randint(2, size=number_points)
-    constraint = - np.ones((number_points, number_points))
-    constraint += 2 * np.equal.outer(labelvector, labelvector)
-    np.fill_diagonal(constraint, 0.)
-    return constraint
+    labelvector = np.random.randint(2, size = number_points)
+    return generate_constraint(labelvector, number_points * (number_points - 1) / 2)
 
 def random_indices(list_points, number_indices):
     """
@@ -78,27 +81,31 @@ def random_indices(list_points, number_indices):
     """
     if isinstance(list_points, int):
         list_points = np.arange(list_points)
-    indices = np.array([(pi,pj) for i, pi in enumerate(list_points) for pj in list_points[:i]])
-    return indices[np.random.choice(len(indices), size = number_indices, replace = False)]
 
-def get_subselection(constraint_matrix, indices):
+    length = len(list_points)
+    indices = set()
+    while len(indices) < number_indices:
+        i = np.random.randint(length - 1)
+        j = np.random.randint(i + 1, length)
+        indices.add((list_points[i], list_points[j]))
+
+    return list(indices)
+
+def generate_constraint(labels, indices):
     """
-        Returns the selection of the constraint_ matrix
-        All other values are null
-        
-        Let also diagonal and symmetry
+        Returns the sparse matrix of constraints
 
         Arguments:
-            constraint_matrix {Array n*n} -- Matrix of constraints
-            indices {List of (i int,j int)} -- Indices to keep 
+            labels {Array n} -- Ground truth labels
+            indices {List of (i int, j int)} -- Indices to keep 
     """
-    selection = np.zeros_like(constraint_matrix)
-    selection[indices[:,0], indices[:,1]] = 1
-    selection[indices[:,1], indices[:,0]] = 1
+    rows, cols, vals = [], [], []
+    for i, j in indices:
+        rows.extend([i, j])
+        cols.extend([j, i])
+        vals.extend([1 if (labels[i] == labels[j]) else -1] * 2)
 
-    constraint_result = constraint_matrix.copy()
-    constraint_result[np.logical_not(selection)] = 0
-    return constraint_result
+    return coo_matrix((vals, (rows, cols)), shape = (len(labels), len(labels)))
 
 def verification_constraint(constraint_matrix, assignation):
     """
@@ -111,6 +118,55 @@ def verification_constraint(constraint_matrix, assignation):
         Returns:
             number constraint respected, number constraint broken
     """
-    observed_constraint = 2*np.equal.outer(assignation, assignation) - 1 # -1 different cluster, 1 same cluster
-    comparison_assignation = np.multiply(observed_constraint, constraint_matrix) # 1 verified constraint, -1 unverified
-    return np.sum(comparison_assignation > 0), np.sum(comparison_assignation < 0)
+    @jit(nopython=True)
+    def fast_verification(row, col, data, assingation):
+        respected, broken = 0, 0
+        for i, j, val in zip(row, col, data):   
+            if assignation[i] == assignation[j] and val > 0:
+                respected += 1
+            elif assignation[i] != assignation[j] and val < 0:
+                respected += 1
+            else:
+                broken += 1
+        return respected, broken
+
+    return fast_verification(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
+
+def indices_constraint(constraint_matrix, assignation):
+    """
+        Returns the number of constraint verified and broken
+        
+        Arguments:
+            constraint_matrix {Array n*n} -- Constraint matrix
+            assignation {Array n} -- Assignation
+
+        Returns:
+            number constraint respected, number constraint broken
+    """
+    @jit(nopython=True)
+    def fast_indices(row, col, data, assingation):
+        respected, broken = [], []
+        for i, j, val in zip(row, col, data):   
+            if assignation[i] == assignation[j] and val > 0:
+                respected.append((i,j))
+            elif assignation[i] != assignation[j] and val < 0:
+                respected.append((i,j))
+            else:
+                broken.append((i,j))
+        return respected, broken
+
+    return fast_indices(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
+
+def kta_score(constraint_matrix, assignation):
+    """
+        Returns the kta score
+        
+        Arguments:
+            constraint_matrix {Array n*n} -- Constraint matrix
+            assignation {Array n} -- Assignation
+
+        Returns:
+            KTA Score
+    """
+    respected, broken = verification_constraint(constraint_matrix, assignation)
+    return respected / (respected + broken)
