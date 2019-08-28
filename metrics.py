@@ -21,7 +21,9 @@ def evalCluster(predictions, labelGT):
     cluster_metric["Adjuster Mutual Info"] = metrics.adjusted_mutual_info_score(labelGT, predictions)  
     cluster_metric["Normalized Mutual Info"] = metrics.normalized_mutual_info_score(labelGT, predictions)  
     cluster_metric["Fowlkes Mallows"] = metrics.fowlkes_mallows_score(labelGT, predictions)
-    cluster_metric["FScore"] = fScore(labelGT, predictions)
+    if len(predictions) < 5000:
+        # Limit size for memory
+        cluster_metric["FScore"] = fScore(labelGT, predictions)
     return cluster_metric
 
 def evalSplit(predictions, labelGT, trainIndices):
