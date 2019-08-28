@@ -2,6 +2,7 @@ import numpy as np
 from utils import print_verbose
 from GPyOpt.methods import BayesianOptimization
 from sklearn.metrics.pairwise import cosine_similarity
+import constraint
 from models.kkmeans import kernelKmeans
 from KernelConstrainedKmeans.initialization import Initialization
 
@@ -57,8 +58,7 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
                 assignations[step] = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
                 
                 # Computation score on observed constraints
-                observed_constraint = 2 * np.equal.outer(assignations[step], assignations[step]) - 1.0
-                kta_score.append(np.dot(observed_constraint.ravel(), constraint_matrix.ravel()))
+                kta_score.append(constraint.kta_score(constraint_matrix, assignations[step]))
 
                 print_verbose("Step {}".format(step), verbose, level = 1)
                 print_verbose("\t Alpha  : {}".format(weights_features), verbose, level = 1)
