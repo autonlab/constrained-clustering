@@ -113,6 +113,7 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False,
                 kernels_name = np.load(path)
                 names_transformation = [k for k in kernels_name if any(kname in k for kname in kernellist)]
                 kernels_transformation = [kernels_name[k] for k in names_transformation]
+                print_verbose("File {} used".format(path), verbose)
             except:
                 print_verbose("File at {} cannot be opened".format(path), verbose)
                 remove(path)
@@ -317,9 +318,11 @@ def normalize_kernel_approximation(kernel, points = 500):
             Normalized kernel
     """
     if len(kernel) > points:
-        kernel = kernel[np.random.choice(len(kernel), points, replace=False), :]
+        approx = kernel[np.random.choice(len(kernel), points, replace=False), :]
+    else:
+        approx = kernel
 
-    inner = np.abs(safe_sparse_dot(kernel, kernel.T))
+    inner = np.abs(safe_sparse_dot(approx, approx.T))
     denom = np.percentile(inner.ravel(), 95) / 2.0
     if denom < 0.0001:
         return None
