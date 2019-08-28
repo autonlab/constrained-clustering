@@ -134,7 +134,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
     return assignations[np.nanargmin(myBopt.Y)], ksckmeans
 
 def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05, learnrate2 = 0.01,
-    numb_nonzero_max = 5, iterations = 10, verbose = 0):
+    numb_nonzero_max = 5, iterations = 1000, verbose = 0):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the KTA score on the observed constraints computed with Kmeans
