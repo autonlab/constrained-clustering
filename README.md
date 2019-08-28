@@ -1,5 +1,5 @@
 # ConstrainedClustering
-Repository for comparison of constraint clustering algorithms. See [A Perspective on Clustering with Pairwise Constraints]() by Benedikt Boecking, Vincent Jeanselme and Artur Dubrawski (Carnegie Mellon University - Auton Lab - Robotics Institute)
+Repository for comparison of constraint clustering algorithms. 
 
 ## Structure
 In order to reproduce the experiment execute the norebook `Experiments.ipynb` and then `Visualizations.ipynb` which allows to analyze the results and compare the different methods.  
