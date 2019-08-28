@@ -107,7 +107,10 @@ def produce_kernels(dname, kernellist, data, verbose = 0, force = False,
         
         # Open existing data
         kernels_name = []
-        path = join(save_path, dname, name + '.npz')
+        if approximation:
+            path = join(save_path, dname, name + '_approximated.npz')
+        else:
+            path = join(save_path, dname, name + '.npz')
         if isfile(path) and not(force):
             try:
                 kernels_name = np.load(path)
