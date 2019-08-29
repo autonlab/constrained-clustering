@@ -175,7 +175,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
                 farthest_init = 'k-means++'
                 n_init = 10
             else:
-                farthest_init = initializer.compute_center(kernel_approx, farthest_init)
+                farthest_init = initializer.centers
                 n_init = 1
             assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
 
@@ -214,14 +214,13 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
         for iteration in range(iterations):
             # Normalize proba
             number_component_proba /= number_component_proba.sum()
-            kernel_proba /= kernel_proba.sum()
 
             if number_component_proba.sum() < 0.00001 or kernel_proba.sum() < 0.00001:
                 break
 
             # Draw weight
             number_components = min(np.random.choice(numb_nonzero_max, p = number_component_proba), np.count_nonzero(kernel_proba))
-            indices = np.random.choice(len(kernels), number_components, p = kernel_proba, replace = False)
+            indices = np.random.choice(len(kernels), number_components, p = kernel_proba / kernel_proba.sum(), replace = False)
             weights = [np.clip(np.random.normal(kernel_proba[i], 0.1), 0, 1) for i in indices]
 
             # Create a weight vector with zeros
@@ -258,7 +257,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
         farthest_init = 'k-means++'
         n_init = 10
     else:
-        farthest_init = initializer.compute_center(kernel_approx, farthest_init)
+        farthest_init = initializer.centers
     assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
 
     return assignation
