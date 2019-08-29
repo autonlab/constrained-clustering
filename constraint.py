@@ -132,30 +132,34 @@ def verification_constraint(constraint_matrix, assignation):
 
     return fast_verification(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
 
-def indices_constraint(constraint_matrix, assignation):
+def indices_constraint_violated(constraint_matrix, assignation):
     """
-        Returns the number of constraint verified and broken
+        Returns the constraint violated for must link and cannot link
         
         Arguments:
             constraint_matrix {Array n*n} -- Constraint matrix
             assignation {Array n} -- Assignation
 
         Returns:
-            number constraint respected, number constraint broken
+            Indices of constraint violated
     """
     @jit(nopython=True)
     def fast_indices(row, col, data, assingation):
-        respected, broken = [], []
-        for i, j, val in zip(row, col, data):   
-            if assignation[i] == assignation[j] and val > 0:
-                respected.append((i,j))
-            elif assignation[i] != assignation[j] and val < 0:
-                respected.append((i,j))
-            else:
-                broken.append((i,j))
-        return respected, broken
+        must_link_broken, cannot_link_broken = [], []
+        for i, j, val in zip(row, col, data):
+            if assignation[i] != assignation[j] and val > 0:
+                must_link_broken.append((i,j))
+            if assignation[i] == assignation[j] and val < 0:
+                cannot_link_broken.append((i,j))
+        return must_link_broken, cannot_link_broken
 
-    return fast_indices(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
+    must_link_broken, cannot_link_broken = fast_indices(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
+    if len(must_link_broken) > 0:
+        must_link_broken = np.vstack(must_link_broken).T
+    if len(cannot_link_broken) > 0:
+        cannot_link_broken = np.vstack(cannot_link_broken).T
+
+    return must_link_broken, cannot_link_broken
 
 def kta_score(constraint_matrix, assignation):
     """
