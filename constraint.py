@@ -107,6 +107,18 @@ def generate_constraint(labels, indices):
 
     return coo_matrix((vals, (rows, cols)), shape = (len(labels), len(labels)))
 
+@jit(nopython=True)
+def fast_verification(row, col, data, assignation):
+    respected, broken = 0, 0
+    for i, j, val in zip(row, col, data):   
+        if assignation[i] == assignation[j] and val > 0:
+            respected += 1
+        elif assignation[i] != assignation[j] and val < 0:
+            respected += 1
+        else:
+            broken += 1
+    return respected, broken
+
 def verification_constraint(constraint_matrix, assignation):
     """
         Returns the number of constraint verified and broken
@@ -118,19 +130,17 @@ def verification_constraint(constraint_matrix, assignation):
         Returns:
             number constraint respected, number constraint broken
     """
-    @jit(nopython=True)
-    def fast_verification(row, col, data, assingation):
-        respected, broken = 0, 0
-        for i, j, val in zip(row, col, data):   
-            if assignation[i] == assignation[j] and val > 0:
-                respected += 1
-            elif assignation[i] != assignation[j] and val < 0:
-                respected += 1
-            else:
-                broken += 1
-        return respected, broken
-
     return fast_verification(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
+
+@jit(nopython=True)
+def fast_indices(row, col, data, assignation):
+    must_link_broken, cannot_link_broken = [], []
+    for i, j, val in zip(row, col, data):
+        if assignation[i] != assignation[j] and val > 0:
+            must_link_broken.append((i,j))
+        if assignation[i] == assignation[j] and val < 0:
+            cannot_link_broken.append((i,j))
+    return must_link_broken, cannot_link_broken
 
 def indices_constraint_violated(constraint_matrix, assignation):
     """
@@ -143,16 +153,6 @@ def indices_constraint_violated(constraint_matrix, assignation):
         Returns:
             Indices of constraint violated
     """
-    @jit(nopython=True)
-    def fast_indices(row, col, data, assingation):
-        must_link_broken, cannot_link_broken = [], []
-        for i, j, val in zip(row, col, data):
-            if assignation[i] != assignation[j] and val > 0:
-                must_link_broken.append((i,j))
-            if assignation[i] == assignation[j] and val < 0:
-                cannot_link_broken.append((i,j))
-        return must_link_broken, cannot_link_broken
-
     must_link_broken, cannot_link_broken = fast_indices(constraint_matrix.row, constraint_matrix.col, constraint_matrix.data, assignation)
     if len(must_link_broken) > 0:
         must_link_broken = np.vstack(must_link_broken).T
