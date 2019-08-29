@@ -1,8 +1,9 @@
 from utils import print_verbose
-from KernelConstrainedKmeans.initialization import Initialization
+from KernelConstrainedKmeans.initialization import Initialization, Euclidean_Initialization
 
-from sklearn.metrics.pairwise import pairwise_kernels,euclidean_distances
+from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.preprocessing import normalize
+from constraint import indices_constraint_violated
 from scipy.optimize import minimize
 import numpy as np
 
@@ -50,7 +51,7 @@ class Assignment_HMRFkmeans:
         # precompute projections.
         Xproj = np.multiply(X, np.sqrt(avec))
         Y = np.multiply(centers, np.sqrt(avec))
-        
+
         if self.metric == 'cosine':
             normalize(Xproj, copy=False)
             normalize(Y, copy=False)
@@ -86,8 +87,6 @@ class HMRFkmeans_Error:
         self.idxs_mustl_violated = None
         self.idxs_cannotl_violated = None
         self.constraint_matrix = constraint_matrix
-        self.must_link_idxs = constraint_matrix > 0
-        self.not_link_idxs = constraint_matrix < 0
         self.dmaxmal = 1e+7
         if metric == 'cosine':
             self.compute_error = self.compute_error_cosine
@@ -104,12 +103,7 @@ class HMRFkmeans_Error:
             self.Centers[k] = X[assignation == k].mean(0)
         self.masks = [assignation == k for k in ulbls]
         #precompute indices for penalty terms
-        observed_constraint = 2 * np.equal.outer(assignation, assignation) - 1  # -1 different cluster, 1 same cluster
-        comparison_assignation = np.multiply(observed_constraint,self.constraint_matrix)
-        #set upper triangular to zero so that we don't double count (i,j) as (j,i)
-        comparison_assignation[np.triu_indices(X.shape[0],1)]=0
-        self.idxs_mustl_violated = np.where(np.multiply(comparison_assignation<0,self.must_link_idxs))
-        self.idxs_cannotl_violated = np.where(np.multiply(comparison_assignation<0,self.not_link_idxs))
+        self.idxs_mustl_violated, self.idxs_cannotl_violated = indices_constraint_violated(self.constraint_matrix, assignation)
 
     # TODO: Merge those functions: Why some are global and other not ?
     def compute_error_cosine(self,avec,X):
@@ -129,13 +123,13 @@ class HMRFkmeans_Error:
         # We use einsum to compute a fast product between two matrices row wise.
         # Constant 1.1 used instead of 1.0 due to numerical instability which can lead to the inner product between
         # normalized vectors to be greater than 1. 
-        if self.idxs_mustl_violated[0].size > 0:
+        if len(self.idxs_mustl_violated) > 0:
             res += (1.1-np.einsum('ij,ij->i', Xproj[self.idxs_mustl_violated[0]], Xproj[self.idxs_mustl_violated[1]])).sum()
-        if self.idxs_cannotl_violated[0].size > 0:
+        if len(self.idxs_cannotl_violated) > 0:
             res += (2.0-(1.0-np.einsum('ij,ij->i', Xproj[self.idxs_cannotl_violated[0]], Xproj[self.idxs_cannotl_violated[1]]))).sum()
         # add rayleigh prior over A matrix that parameterizes the metric and return
         return float(res)-rayleigh_prior(avec)
-    
+
     def compute_error_mahalanobis(self,avec,X):
         '''
         Compute error to minimize objective in terms of the underlying metric. 
@@ -149,9 +143,9 @@ class HMRFkmeans_Error:
             res += np.square(Xproj[idxs] - Y[i]).sum()
         
         # compute violated constraints. 
-        if self.idxs_mustl_violated[0].size > 0:
+        if len(self.idxs_mustl_violated) > 0:
             res += np.square(Xproj[self.idxs_mustl_violated[0]] - Xproj[self.idxs_mustl_violated[1]]).sum()
-        if self.idxs_cannotl_violated[0].size > 0:
+        if len(self.idxs_cannotl_violated) > 0:
             D = np.square(Xproj[self.idxs_cannotl_violated[0]] - Xproj[self.idxs_cannotl_violated[1]]).sum(1)
             # clip so none are below zero 
             # (i.e. they are far enough from each other so that violation is ok)
@@ -163,7 +157,6 @@ class HMRFkmeans_Error:
         # it would just encourage smaller values on diagonal, nothing more.
         # Then return
         return float(res)-rayleigh_prior(avec)
-            
 
     def compute_error_assignment_cosine(self, Xproj, Y, assignation, clusters):
         '''
@@ -175,24 +168,17 @@ class HMRFkmeans_Error:
             idxs = assignation == k
             res -= np.dot(Xproj[idxs], Y[k]).sum()
 
-        # constraints
-        observed_constraint = 2 * np.equal.outer(assignation, assignation) - 1  # -1 different cluster, 1 same cluster
-        comparison_assignation = np.multiply(observed_constraint, self.constraint_matrix)
+        idxs_mustl_violated, idxs_cannotl_violated = indices_constraint_violated(self.constraint_matrix, assignation)
 
-        # set upper triangular to zero so that we don't double count (i,j) as (j,i)
-        comparison_assignation[np.triu_indices(Xproj.shape[0], 1)] = 0
-        idxs_mustl_violated = np.where(np.multiply(comparison_assignation < 0, self.must_link_idxs))
-        idxs_cannotl_violated = np.where(np.multiply(comparison_assignation < 0, self.not_link_idxs))
-        
         # compute violated constraints. 
         # We use einsum to compute a fast product between two matrices row wise.
         # Constant 1.1 used instead of 1.0 due to numerical instability which can lead to the inner product between
         # normalized vectors to be greater than 1. 
-        if idxs_mustl_violated[0].size > 0:
+        if len(idxs_mustl_violated) > 0:
             res += (1.1-np.einsum('ij,ij->i', Xproj[idxs_mustl_violated[0]], Xproj[idxs_mustl_violated[1]])).sum()
-        if idxs_cannotl_violated[0].size > 0: 
+        if len(idxs_cannotl_violated) > 0:
             res += (2.0-(1.0-np.einsum('ij,ij->i', Xproj[idxs_cannotl_violated[0]], Xproj[idxs_cannotl_violated[1]]))).sum()
-            
+
         # return error, ignore rayleigh_prior (it remains constant when metric does not change)
         return float(res)
     
@@ -206,25 +192,18 @@ class HMRFkmeans_Error:
             idxs = assignation == k
             res += np.square(Xproj[idxs] - Y[k]).sum()
 
-        # constraints
-        observed_constraint = 2 * np.equal.outer(assignation, assignation) - 1  # -1 different cluster, 1 same cluster
-        comparison_assignation = np.multiply(observed_constraint, self.constraint_matrix)
+        idxs_mustl_violated, idxs_cannotl_violated = indices_constraint_violated(self.constraint_matrix, assignation)
 
-        # set upper triangular to zero so that we don't double count (i,j) as (j,i)
-        comparison_assignation[np.triu_indices(Xproj.shape[0], 1)] = 0
-        idxs_mustl_violated = np.where(np.multiply(comparison_assignation < 0, self.must_link_idxs))
-        idxs_cannotl_violated = np.where(np.multiply(comparison_assignation < 0, self.not_link_idxs))
-        
         # compute violated constraints. 
-        if self.idxs_mustl_violated[0].size > 0:
+        if len(idxs_mustl_violated) > 0:
             res += np.square(Xproj[idxs_mustl_violated[0]] - Xproj[idxs_mustl_violated[1]]).sum()
-        if self.idxs_cannotl_violated[0].size > 0:
+        if len(idxs_cannotl_violated) > 0:
             D = np.square(Xproj[idxs_cannotl_violated[0]] - Xproj[idxs_cannotl_violated[1]]).sum(1)
             # clip so none are below zero 
             # (i.e. they are far enough from each other so that violation is ok)
             # otherwise metric learning might increase distance even further to minimize objective
             res += np.clip(self.dmaxmal-D, 0.0, None).sum()
-            
+
         # ignore rayleigh_prior and log det A (remain constant since metric does not change)
         # return error
         return float(res)
@@ -247,11 +226,11 @@ def convergence_eps(previous, error, iteration, eps=1e-05, maxiteration=100):
 
 
 def hmrf_kmeans(data, k, constraint_matrix,
-                        verbose = 0, a_init = None, par_kernel_jobs = 1,
-                        init_args = {}, convergence_args = {} ,metric='cosine',
-                        solveroptions={'disp': None, 'iprint': -1, 'gtol': 1e-07, 'eps': 1e-08,
-                                       'maxiter': 200, 'ftol': 2.220446049250313e-09, 'maxcor': 10,
-                                       'maxfun': 15000}):
+                verbose = 0, a_init = None, par_kernel_jobs = 1,
+                init_args = {}, convergence_args = {} ,metric='mahalanobis',
+                solveroptions={'disp': None, 'iprint': -1, 'gtol': 1e-07, 'eps': 1e-08,
+                                'maxiter': 200, 'ftol': 2.220446049250313e-09, 'maxcor': 10,
+                                'maxfun': 15000}):
     """
         Constrained  K-Means with parametrized cosine distance
         Optimization of a parametrized cosine distance
@@ -286,7 +265,7 @@ def hmrf_kmeans(data, k, constraint_matrix,
         metric = 'mahalanobis'
     if not metric in ['cosine','mahalanobis']:
         raise ValueError("Metric unknown. Supported metrics are cosine and mahalanobis ")
-    
+
     # Initialization
     if a_init is None:
         avec = np.ones(data.shape[1])
@@ -314,15 +293,15 @@ def hmrf_kmeans(data, k, constraint_matrix,
 
     ## Assignation
     assignation = Assignment_HMRFkmeans(error,metric)
-    
+
     # we use a kernel matrix to initialize to reuse some code
     if metric== 'cosine':
         kernel = pairwise_kernels(np.multiply(data, np.sqrt(avec)), metric='cosine', n_jobs=par_kernel_jobs)
+        assignation_current = Initialization(k, constraint_matrix).farthest_initialization(kernel)
+        del kernel
     else:
-        kernel = pairwise_kernels(np.multiply(data, np.sqrt(avec)), metric='linear', n_jobs=par_kernel_jobs)
-    
-    assignation_current = Initialization(k, constraint_matrix).farthest_initialization(kernel)
-    del kernel
+        assignation_current = Euclidean_Initialization(k, constraint_matrix).farthest_initialization(np.multiply(data, np.sqrt(avec)))
+
     # M step: update centers
     error.update_centers_masks(data, assignation_current)
     print_verbose("Initial assignation : {}".format(assignation_current), verbose)
