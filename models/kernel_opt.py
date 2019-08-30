@@ -4,7 +4,6 @@
 """
 import numpy as np
 import constraint
-from scipy.sparse import triu as striu
 from utils import print_verbose
 from sklearn.cluster import KMeans
 from models.kkmeans import kernelKmeans
