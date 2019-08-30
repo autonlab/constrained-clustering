@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 from models.kkmeans import kernelKmeans
 from GPyOpt.methods import BayesianOptimization
 from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
-from KernelConstrainedKmeans.initialization import Initialization, Euclidean_Initialization
+from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
 
 # TODO: Change this function to an object that has a fit and transform and labels attributes
 def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_components = 3, bayes_iter = 1000, verbose = 0):
@@ -156,7 +156,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             Assignation of length n
     """
     # Compute the components implied by constrained (without any distance)
-    initializer = Euclidean_Initialization(classes, constraint_matrix)
+    initializer = InitializationScale(classes, constraint_matrix)
 
     def objective_custom(weights):
         """
@@ -175,7 +175,6 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
                 farthest_init = 'k-means++'
                 n_init = 10
             else:
-                farthest_init = initializer.centers
                 n_init = 1
             assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
 
@@ -256,8 +255,6 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
     if farthest_init is None:
         farthest_init = 'k-means++'
         n_init = 10
-    else:
-        farthest_init = initializer.centers
     assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
 
     return assignation
