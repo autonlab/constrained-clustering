@@ -240,7 +240,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             # Update best performance
             if kta > best_kta:
                 best_kta = kta
-                best_weights = weights
+                best_weights = beta
 
                 # Perfect solution
                 if best_kta == 1.:
