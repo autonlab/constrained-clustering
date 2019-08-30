@@ -47,6 +47,8 @@ def createFold(dname, path = config.result, number_fold = 10,
             index_label = np.argwhere(labelvector == label).flatten()
             train_index[fold].extend(np.random.choice(index_label, size = lentrain, replace = False).tolist())
 
+        np.random.shuffle(train_index[fold])
+
         # Compute constraints matrix
         ## Number constraint
         number_constraint = min(int(((len(train_index[fold])-1)*len(train_index[fold])/2.)), 10000)
