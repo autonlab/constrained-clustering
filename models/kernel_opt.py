@@ -289,10 +289,6 @@ class InitializationTest:
         self.constraint = constraint
         assert self.number >= k, "Constraint too important for number of cluster"
 
-        if (count > 1).sum() < k:
-            print("Constraints do not allow to find enough connected components for farthest first ({} for {} classes) => Random forced".format((count > 1).sum(), k))
-            self.farthest_initialization = lambda x: None
-
         self.k = k
 
     def farthest_initialization(self, kernel):
