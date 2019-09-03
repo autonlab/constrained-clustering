@@ -38,7 +38,7 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
         kernel_components = len(kernels) - 1
 
     # Compute the components implied by constrained (without any distance)
-    initializer = Initialization(classes, constraint_matrix)
+    initializer = InitializationTest(classes, constraint_matrix)
 
     # Computes initial score of each kernels
     kernel_kta = np.zeros(len(kernels))
@@ -155,7 +155,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             Assignation of length n
     """
     # Compute the components implied by constrained (without any distance)
-    initializer = InitializationScale(classes, constraint_matrix)
+    initializer = InitializationTest(classes, constraint_matrix)
 
     def objective_custom(weights):
         """
@@ -257,3 +257,77 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
     assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
 
     return assignation
+
+"""
+    Files containing all the procedures in order
+    to initialize the cluster assigment at the start
+"""
+import numpy as np
+from scipy.sparse.csgraph import connected_components
+
+class InitializationTest:
+    """
+        This object precompute the main components implied by constraints
+    """
+
+    def __init__(self, k, constraint):
+        """
+            Precompute connected components
+            Arguments:
+                k {int} -- Number of cluster
+                constraint {Array n * n} -- Constraint matrix with value in (-1, 1)
+                    Positive values are must link constraints
+                    Negative values are must not link constraints
+        """
+        assert constraint is not None, "Farthest initialization cannot be used with no constraint"
+
+        # Computes the most important components and order by importance
+        self.number, components = connected_components(constraint > 0, directed=False)
+        unique, count = np.unique(components, return_counts = True)
+        order = np.argsort(count)[::-1]
+        self.components = np.argsort(unique[order])[components]
+        self.constraint = constraint
+        assert self.number >= k, "Constraint too important for number of cluster"
+
+        if (count > 1).sum() < k:
+            print("Constraints do not allow to find enough connected components for farthest first ({} for {} classes) => Random forced".format((count > 1).sum(), k))
+            self.farthest_initialization = lambda x: None
+
+        self.k = k
+
+    def farthest_initialization(self, kernel):
+        """
+            Farthest points that verify constraint
+
+            Arguments:
+                kernel {Array n * n} -- Kernel matrix (n * n)
+                k {Int} --  Number cluster
+                constraint {Array n * n} -- Constraint matrix
+        """
+        components = self.components.copy()
+
+        # Precompute center distances
+        center_cluster = {}
+        for c in range(self.k):
+            center_cluster[c] = kernel[self.components == c].mean(0)
+
+        # Merge components respecting constraint until # = k
+        for i in range(self.k, self.number):
+            # Computes intra distance
+            center_cluster[i] = kernel[self.components == i].mean(0)
+
+            # Computes distances to all other cluster 
+            # We ignore the last part which depends on the intravariance of the cluster i
+            distance = [np.linalg.norm(center_cluster[i] - center_cluster[c])
+                for c in range(self.k)]
+
+            # Closest verifying constraint
+            closest = np.argmin(distance)
+
+            # Update assignation closest
+            components[self.components == i] = closest
+            center_cluster[closest] =  kernel[components == closest].mean(0)
+
+        centers = [center_cluster[i] for i in np.unique(components)]
+
+        return np.vstack(centers)
