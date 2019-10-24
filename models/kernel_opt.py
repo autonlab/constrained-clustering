@@ -133,9 +133,9 @@ def kernel_bayes_clustering(kernels, classes, constraint_matrix, kernel_componen
     return assignations[np.nanargmin(myBopt.Y)], ksckmeans
 
 def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05, learnrate2 = 0.01,
-    numb_nonzero_max = 5, iterations = 1000, verbose = 0):
+    numb_nonzero_max = 5, iterations = 1000, verbose = 0, rand_optimization =  False):
     """
-        Bayesian optimization on the space of combinasions of the given kernels
+        Search on the space of combinasions of the given kernels
         With maximization of the KTA score on the observed constraints computed with Kmeans
 
         Arguments:
@@ -150,6 +150,7 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             bayes_iter {int} -- Number of iteration to compute on the space (default: {1000})
                 NB: Higher this number slower is the algorithm
             verbose {int} -- Level of verbosity (default: {0} -- No verbose)
+            rand_optimization {bool} -- Random search
 
         Returns:
             Assignation of length n
@@ -213,13 +214,18 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             # Normalize proba
             number_component_proba /= number_component_proba.sum()
 
-            if number_component_proba.sum() < 0.00001 or kernel_proba.sum() < 0.00001:
+            if not(rand_optimization) and (number_component_proba.sum() < 0.00001 or kernel_proba.sum() < 0.00001):
                 break
 
             # Draw weight
-            number_components = min(np.random.choice(numb_nonzero_max, p = number_component_proba), np.count_nonzero(kernel_proba))
-            indices = np.random.choice(len(kernels), number_components, p = kernel_proba / kernel_proba.sum(), replace = False)
-            weights = [np.clip(np.random.normal(kernel_proba[i], 0.1), 0, 1) for i in indices]
+            if rand_optimization:
+                number_components = max(np.random.choice(numb_nonzero_max), 2)
+                indices = np.random.choice(len(kernels), number_components, replace = False)
+                weights = [np.random.uniform(0, 1) for i in indices]
+            else:
+                number_components = min(np.random.choice(numb_nonzero_max, p = number_component_proba), np.count_nonzero(kernel_proba))
+                indices = np.random.choice(len(kernels), number_components, p = kernel_proba / kernel_proba.sum(), replace = False)
+                weights = [np.clip(np.random.normal(kernel_proba[i], 0.1), 0, 1) for i in indices]
 
             # Create a weight vector with zeros
             beta = np.zeros(len(kernels))
@@ -229,8 +235,9 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
             kta = objective_custom(beta)
 
             # Update Probability
-            number_component_proba[number_components] = np.clip(number_component_proba[number_components] + learnrate2 * (kta - best_kta), 0, 1)
-            kernel_proba[indices] = np.clip(kernel_proba[indices] + learnrate1 * (kta - best_kta), 0, 1)
+            if not(rand_optimization):
+                number_component_proba[number_components] = np.clip(number_component_proba[number_components] + learnrate2 * (kta - best_kta), 0, 1)
+                kernel_proba[indices] = np.clip(kernel_proba[indices] + learnrate1 * (kta - best_kta), 0, 1)
 
             print_verbose("Step {}".format(iteration), verbose, level = 1)
             print_verbose("\t Weights  : {}".format(weights), verbose, level = 1)
@@ -246,6 +253,8 @@ def kernel_csc_clustering(kernels, classes, constraint_matrix, learnrate1 = 0.05
                     break
 
     # Do final assignment
+    if (best_weights > 0).sum() > 1:
+        print_verbose("Combination better than one : {}".format(best_weights), verbose)
     kernel_approx = np.hstack([weight * kernel for kernel, weight in zip(kernels, best_weights) if weight > 0.0])
 
     # Computation assignation
