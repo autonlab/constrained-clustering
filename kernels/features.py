@@ -326,7 +326,7 @@ def normalize_kernel_approximation(kernel, points = 500):
         approx = kernel
 
     inner = np.abs(safe_sparse_dot(approx, approx.T))
-    denom = np.percentile(inner.ravel(), 95) / 2.0
+    denom = np.percentile(inner.flatten(), 95) / 2.0
     if denom < 0.0001:
         return None
 
