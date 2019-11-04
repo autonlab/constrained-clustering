@@ -1,3 +1,4 @@
+import constraint
 import numpy as np
 from models.kkmeans import kernelKmeans
 from KernelConstrainedKmeans.initialization import Initialization
@@ -32,11 +33,10 @@ def crossValidation(kernels, classes, constraint_matrix, folds = 5):
 
         # Kmeans step
         assignment[i] = kernelKmeans(kernel, assignment[i], max_iteration = 100)
-        observed_constraint = 2 * np.equal.outer(assignment[i], assignment[i]) - 1.0
-        kernel_kta[i] = np.dot(observed_constraint.ravel(), constraint_matrix.ravel())
+        kernel_kta[i] = constraint.kta_score(constraint_matrix, assignment[i])
 
     best_i = np.nanargmax(kernel_kta)
     initialization = initializer.farthest_initialization(kernels[best_i])
-    ksckmeans = weightedKernelSoftConstrainedKmeans(kernels[best_i], initialization, constraint_matrix)
+    ksckmeans = weightedKernelSoftConstrainedKmeans(kernels[best_i], initialization, constraint_matrix.toarray())
 
     return assignment[best_i], ksckmeans
