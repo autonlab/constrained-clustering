@@ -139,6 +139,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
             # Compute the best candidate
             predictions += self.exploration * confidence
             index_candidate = np.argmax(predictions)
+            self.candidates[step] = potential_candidates[index_candidate]
             self.scores[step] = self.objective_function(potential_candidates[index_candidate])
             
             print_verbose("Step {} - KTA {:.5f}".format(step, self.scores[step]), self.verbose, level = 1)
