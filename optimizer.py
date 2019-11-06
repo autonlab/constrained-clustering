@@ -102,7 +102,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
     
     def __init__(self, objective_function, dimensionality, iteration = 1000,
                  init_candidates = [], random_init = 100, non_zero = 5, verbose = 0,
-                 model = None, acquisition_evals = 10000, exploration = 2.):
+                 model = None, acquisition_evals = 10000, exploration = 1.):
         """
             Initialize model for evaluation
         
