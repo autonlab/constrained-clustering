@@ -33,7 +33,7 @@ class CombinationKernelOptimizer:
     """
     
     @classmethod
-    def create(cls, method, iteration = 170, **args):
+    def create(cls, method, iteration = 1000, **args):
         """
             Optimizer factory
         """
