@@ -12,7 +12,7 @@ from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmea
 from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
 
 def kernel_clustering(kernels, classes, constraint_matrix, 
-        optimizer = "model", kernel_approx = False, verbose = 0, **args_optimizer):
+        optimizer_type = "model", kernel_approx = False, verbose = 0, **args_optimizer):
     """
         Constraint clustering with kernel combination
         With maximization of the KTA score on the observed constraints computed with Kmeans
@@ -23,7 +23,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
             constraint_matrix {Array n * n} -- Constraint matrix with value between -1 and 1 
                 Positive values represent must link points
                 Negative values represent should not link points
-            optimizer {string} -- Optimizer to use (default: 'model' (model guided optimization))
+            optimizer_type {string} -- Optimizer to use (default: 'model' (model guided optimization))
             kernel_approx {bool} -- Provided kernels are approximation (default: False)
 
         Keyword Arguments:
@@ -61,7 +61,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
     init_candidates = np.eye(len(kernels))
     
     # Create optimizer
-    optimizer = CombinationKernelOptimizer.create(optimizer, verbose = verbose, init_candidates = init_candidates, 
+    optimizer = CombinationKernelOptimizer.create(optimizer_type, verbose = verbose, init_candidates = init_candidates, 
                                                   objective_function = lambda weights: constraint.kta_score(constraint_matrix, compute_assignation(weights)),
                                                   dimensionality = len(kernels), **args_optimizer)
     
