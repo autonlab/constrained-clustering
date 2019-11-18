@@ -5,3 +5,4 @@ matplotlib
 rpy2
 pmlb
 GPyOpt
+metric-learn==0.4.0
