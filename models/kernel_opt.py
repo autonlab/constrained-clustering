@@ -51,7 +51,12 @@ def kernel_clustering(kernels, classes, constraint_matrix,
         
         if kernel_approx:
             # Kernel approximation
-            assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = 1, algorithm = 'elkan').fit(kernel).labels_
+            if farthest_init is None:
+                farthest_init = 'k-means++'
+                n_init = 10
+            else:
+                n_init = 1
+            assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel).labels_
         else:
             assignation = kernelKmeans(kernel, farthest_init, max_iteration = 100, verbose = 0)
         
