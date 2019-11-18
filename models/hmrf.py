@@ -301,8 +301,6 @@ def hmrf_kmeans(data, k, constraint_matrix,
         del kernel
     else:
         assignation_current = Euclidean_Initialization(k, constraint_matrix).farthest_initialization(np.multiply(data, np.sqrt(avec)))
-        if assignation_current is None:
-            assignation_current = Euclidean_Initialization(k, constraint_matrix).random_initialization()
 
     # M step: update centers
     error.update_centers_masks(data, assignation_current)
