@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 from utils import ConfidenceModel, print_verbose
 from GPyOpt.methods import BayesianOptimization
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor
 
 @jit(nopython=True)
 def get_random_candidate(number, dimensionality, non_zero):
@@ -20,7 +20,6 @@ def get_random_candidate(number, dimensionality, non_zero):
     for i in range(number):     
         number_components = np.random.randint(2, non_zero + 1)
         indices = np.random.choice(dimensionality, number_components, replace = False)
-        weights_indices = 0
         weights_indices = [np.random.uniform(epsilon, 1) for k in indices]
         for j, w in zip(indices, weights_indices):
             weights[i, j] = w
@@ -33,14 +32,14 @@ class CombinationKernelOptimizer:
     """
     
     @classmethod
-    def create(cls, method, iteration = 1000, **args):
+    def create(cls, method, iteration = 1000, init_candidates = [], **args):
         """
             Optimizer factory
         """
         if method == "random":
-            return CombinationKernelOptimizer(random_init = iteration, **args)
+            return CombinationKernelOptimizer(iteration = iteration, random_init = iteration - len(init_candidates), init_candidates = init_candidates, **args)
         elif method == "model":
-            return ModelGuidedOptimization(iteration = iteration, **args)
+            return ModelGuidedOptimization(iteration = iteration, init_candidates = init_candidates, **args)
         else:
             print("Optimizer unknown")
 
@@ -102,7 +101,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
     
     def __init__(self, objective_function, dimensionality, iteration = 1000,
                  init_candidates = [], random_init = 100, non_zero = 5, verbose = 0,
-                 model = None, acquisition_evals = 10000, exploration = 1.):
+                 model = None, acquisition_evals = 1000, exploration = 1.):
         """
             Initialize model for evaluation
         
@@ -115,7 +114,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
         CombinationKernelOptimizer.__init__(self, objective_function, dimensionality, iteration, init_candidates, random_init, non_zero, verbose)
         if model is None:
             self.model = ConfidenceModel(
-                            RandomForestRegressor(n_estimators = 300),
+                            ExtraTreesRegressor(n_estimators = 150, max_depth = 10),
                             acquisition_evals
                             )
         else:
