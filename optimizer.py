@@ -1,7 +1,6 @@
 import numpy as np
 from numba import jit
-from utils import ConfidenceModel, print_verbose
-from GPyOpt.methods import BayesianOptimization
+from utils import ConfidenceModel, print_verbose, GPModel
 from sklearn.ensemble import ExtraTreesRegressor
 
 @jit(nopython=True)
@@ -32,14 +31,16 @@ class CombinationKernelOptimizer:
     """
     
     @classmethod
-    def create(cls, method, iteration = 1000, init_candidates = [], **args):
+    def create(cls, method, dimensionality, iteration = 1000, init_candidates = [], **args):
         """
             Optimizer factory
         """
         if method == "random":
-            return CombinationKernelOptimizer(iteration = iteration, random_init = iteration - len(init_candidates), init_candidates = init_candidates, **args)
+            return CombinationKernelOptimizer(dimensionality = dimensionality, iteration = iteration, random_init = iteration - len(init_candidates), init_candidates = init_candidates, **args)
         elif method == "model":
-            return ModelGuidedOptimization(iteration = iteration, init_candidates = init_candidates, **args)
+            return ModelGuidedOptimization(dimensionality = dimensionality, iteration = iteration, init_candidates = init_candidates, **args)
+        elif method == "gp":
+            return ModelGuidedOptimization(dimensionality = dimensionality, iteration = iteration, init_candidates = init_candidates, model = GPModel(dimensionality), **args)
         else:
             print("Optimizer unknown")
 
