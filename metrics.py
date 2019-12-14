@@ -24,6 +24,8 @@ def evalCluster(predictions, labelGT):
     if len(predictions) < 5000:
         # Limit size for memory
         cluster_metric["FScore"] = fScore(labelGT, predictions)
+    else:
+        cluster_metric["FScore"] = np.nan
     return cluster_metric
 
 def evalSplit(predictions, labelGT, trainIndices):
