@@ -9,8 +9,8 @@ print("Ran on {}".format(time))
 if 'int.autonlab.org' in socket.gethostname():
     print("Server")
     datadir = "/zfsauton/data/public/vjeanselme/PennData/"
-    kerneldir = "/zfsauton/data/public/vjeanselme/PennKernels/"
-    result = "/zfsauton/data/public/vjeanselme/PennResults/"
+    kerneldir = "/zfsauton/data/public/vjeanselme/PennKernelsPaper/"
+    result = "/zfsauton/data/public/vjeanselme/PennResultsPaper/"
 else:
     print("Local")
     local = os.getcwd()
