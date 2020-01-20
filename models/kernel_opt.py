@@ -6,7 +6,6 @@ import numpy as np
 import constraint
 from utils import print_verbose
 from sklearn.cluster import KMeans
-from models.kkmeans import kernelKmeans
 from optimizer import CombinationKernelOptimizer
 from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
 from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
@@ -58,7 +57,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
                 n_init = 1
             assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel).labels_
         else:
-            assignation = kernelKmeans(kernel, farthest_init, max_iteration = 100, verbose = 0)
+            assignation = weightedKernelSoftConstrainedKmeans(kernel, farthest_init, max_iteration = 100)
         
         return assignation
     
