@@ -41,8 +41,7 @@ def kernelKmeans(kernel, assignation, max_iteration = 100, verbose = 0):
             distance = {k: float(base_distance[k]) for k in clusters}
             for k in clusters:
                 # Only this term implies a change if center unupdated
-                distance[k] += kernel[i,i] - 2*intra_distance[k][i]/number[k]
-                assignation[i] = k
+                distance[k] -= 2*intra_distance[k][i]/number[k]
 
             assignation[i] = min(distance, key=lambda d: float(distance[d]))
             if previous != assignation[i]:
