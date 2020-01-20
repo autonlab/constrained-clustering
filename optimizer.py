@@ -90,7 +90,7 @@ class CombinationKernelOptimizer:
         """
             Returns best candidate
         """
-        best = np.argmax(self.scores)
+        best = np.nanargmax(self.scores)
         if best <= self.random_init:
             print_verbose("Best solution not obtained after optimization", self.verbose, level = 1)
         return self.candidates[best]
