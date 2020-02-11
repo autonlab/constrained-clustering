@@ -38,8 +38,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
         initializer = InitializationScale(classes, constraint_matrix)
     else:
         initializer = Initialization(classes, constraint_matrix)
-        initializer.farthest_initialization = initializer.back_up
-      
+
     def compute_assignation(weights):
         # Compute new kernel
         if kernel_approx:
@@ -49,7 +48,6 @@ def kernel_clustering(kernels, classes, constraint_matrix,
             
         # Computation assignation
         farthest_init = initializer.farthest_initialization(kernel)
-        
         if kernel_approx:
             # Kernel approximation
             if farthest_init is None:
@@ -59,7 +57,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
                 n_init = 1
             assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel).labels_
         else:
-            assignation = kernelKmeans(kernel, farthest_init, max_iteration = 100)
+            assignation = kernelKmeans(kernel, farthest_init, max_iteration = 300)
 
         return assignation
     
