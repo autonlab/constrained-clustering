@@ -54,19 +54,6 @@ def completion_constraint(constraint_matrix, force = False):
     
     return coo_matrix(result)
 
-def random_constraint(number_points):
-    """
-        Generates a random matrix of constraint
-        
-        Arguments:
-            number_points {Int} -- Number of points
-
-        Returns:
-            Array number_points*number_points of -1, 0, 1
-    """
-    labelvector = np.random.randint(2, size = number_points)
-    return generate_constraint(labelvector, number_points * (number_points - 1) / 2)
-
 def random_indices(list_points, number_indices):
     """
         Generates a list of indices to apply on the constraint matrix
