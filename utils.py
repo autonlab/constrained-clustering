@@ -47,7 +47,7 @@ class ConfidenceModel:
             self.predictions =  np.zeros((data.shape[0], len(self.model.estimators_)))
         
         for i, model in enumerate(self.model.estimators_):
-            self.predictions[:, i] = self.model.predict(data)
+            self.predictions[:, i] = model.predict(data)
 
         return self.predictions[:data.shape[0]].mean(1), self.predictions[:data.shape[0]].std(1)
 
