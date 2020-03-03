@@ -139,7 +139,8 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
             predictions, confidence = self.model.predict_confidence(potential_candidates)
             
             # Compute the best candidate
-            predictions += self.exploration * confidence
+            if step <= self.iteration - 1:
+                predictions += self.exploration * confidence
             index_candidate = np.argmax(predictions)
             self.candidates[step] = potential_candidates[index_candidate]
             self.scores[step] = self.objective_function(potential_candidates[index_candidate])
