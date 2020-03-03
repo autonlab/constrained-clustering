@@ -1,7 +1,9 @@
 import numpy as np
 from numba import jit
 from utils import ConfidenceModel, print_verbose, GPModel
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import BaggingRegressor
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.linear_model import LinearRegression
 
 @jit(nopython=True)
 def get_random_candidate(number, dimensionality, non_zero):
@@ -102,7 +104,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
     
     def __init__(self, objective_function, dimensionality, iteration = 1000,
                  init_candidates = [], random_init = 100, non_zero = 5, verbose = 0,
-                 model = None, acquisition_evals = 1000, exploration = 0.1):
+                 model = None, acquisition_evals = 1000, exploration = 0.1, base_model = LinearRegression()):
         """
             Initialize model for evaluation
         
@@ -115,7 +117,7 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
         CombinationKernelOptimizer.__init__(self, objective_function, dimensionality, iteration, init_candidates, random_init, non_zero, verbose)
         if model is None:
             self.model = ConfidenceModel(
-                            ExtraTreesRegressor(n_estimators = 150, max_depth = 10),
+                            BaggingRegressor(base_model, n_estimators = 150),
                             acquisition_evals
                             )
         else:
