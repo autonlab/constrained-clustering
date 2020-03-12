@@ -146,5 +146,9 @@ class ModelGuidedOptimization(CombinationKernelOptimizer):
             self.scores[step] = self.objective_function(potential_candidates[index_candidate])
             
             print_verbose("Step {} - KTA {:.5f}".format(step, self.scores[step]), self.verbose, level = 1)
-
+        
+            if self.scores[step] == 1:
+                print_verbose("Optimal solution obtained", self.verbose, level = 1)
+                break
+            
         return self.get_best_candidate()
