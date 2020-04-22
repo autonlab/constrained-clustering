@@ -2,8 +2,8 @@ import config
 import os
 import pickle
 import numpy as np
-from utils import print_verbose
-from constraint import random_indices
+from .utils import print_verbose
+from .constraint import random_indices
 from pmlb import classification_dataset_names, fetch_data
 
 def createFold(dname, path = config.result, number_fold = 10, 

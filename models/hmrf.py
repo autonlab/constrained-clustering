@@ -1,9 +1,9 @@
-from utils import print_verbose
+from utils.utils import print_verbose
 from KernelConstrainedKmeans.initialization import Initialization, Euclidean_Initialization
 
 from sklearn.metrics.pairwise import pairwise_kernels, euclidean_distances
 from sklearn.preprocessing import normalize
-from constraint import indices_constraint_violated
+from utils.constraint import indices_constraint_violated
 from scipy.optimize import minimize
 import numpy as np
 

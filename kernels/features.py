@@ -6,7 +6,7 @@ import config
 from os import mkdir, remove
 from os.path import isdir, isfile, join
 from multiprocessing import Pool
-from utils import print_verbose
+from utils.utils import print_verbose
 from kernels.data import get_transformation
 import numpy as np
 from scipy.stats import binom

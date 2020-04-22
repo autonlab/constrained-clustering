@@ -1,6 +1,6 @@
-import constraint
+import utils.constraint
 import numpy as np
-from utils import print_verbose
+from utils.utils import print_verbose
 from hyperopt import hp, tpe, fmin
 from sklearn.cluster import KMeans
 from models.kkmeans import kernelKmeans

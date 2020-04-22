@@ -1,4 +1,4 @@
-import constraint
+import utils.constraint
 import numpy as np
 from models.kkmeans import kernelKmeans
 from KernelConstrainedKmeans.initialization import Initialization

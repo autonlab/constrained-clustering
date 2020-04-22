@@ -1,6 +1,6 @@
 import numpy as np
 from numba import jit
-from utils import ConfidenceModel, print_verbose, GPModel
+from .utils import ConfidenceModel, print_verbose, GPModel
 from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import ExtraTreeRegressor
 from sklearn.linear_model import LinearRegression

@@ -3,7 +3,7 @@
     and a farthest first optimization
 """
 import numpy as np
-from utils import print_verbose
+from utils.utils import print_verbose
 
 def kernelKmeans(kernel, assignation, max_iteration = 100, verbose = 0):
     """

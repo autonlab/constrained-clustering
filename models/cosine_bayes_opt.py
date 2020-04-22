@@ -1,8 +1,8 @@
 import numpy as np
-from utils import print_verbose
+from utils.utils import print_verbose
 from GPyOpt.methods import BayesianOptimization
 from sklearn.metrics.pairwise import cosine_similarity
-import constraint
+import utils.constraint
 from models.kkmeans import kernelKmeans
 from KernelConstrainedKmeans.initialization import Initialization
 

@@ -3,11 +3,11 @@
     With Baysian optimization and agreement of observed constraints
 """
 import numpy as np
-import constraint
-from utils import print_verbose
+import utils.constraint
+from utils.utils import print_verbose
 from sklearn.cluster import KMeans
 from models.kkmeans import kernelKmeans
-from optimizer import CombinationKernelOptimizer
+from utils.optimizer import CombinationKernelOptimizer
 from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
 from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
 
