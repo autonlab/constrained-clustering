@@ -22,6 +22,7 @@ Import your library in `Experiments.ipynb` and select the algorithms that you wa
 
 ### Kernel Clustering
 #### Open your data and constraints
+Constraints data are represented as a sparse matrix of +1 if the points are linked and -1 if they have to be in different sets.
 ```
 import pandas as pd
 import numpy as np
