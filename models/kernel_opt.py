@@ -3,15 +3,11 @@
     With Baysian optimization and agreement of observed constraints
 """
 import numpy as np
-import utils.constraint
+import utils.constraint as constraint
 from utils.utils import print_verbose
-from sklearn.cluster import KMeans
-from models.kkmeans import kernelKmeans
 from utils.optimizer import CombinationKernelOptimizer
-from KernelConstrainedKmeans.wksckmeans import weightedKernelSoftConstrainedKmeans
-from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
 
-def kernel_clustering(kernels, classes, constraint_matrix, 
+def kernel_clustering(kernels, clustering, constraint_matrix, 
         optimizer_type = "model", kernel_approx = False, verbose = 0, **args_optimizer):
     """
         Constraint clustering with kernel combination
@@ -33,12 +29,6 @@ def kernel_clustering(kernels, classes, constraint_matrix,
         Returns:
             Assignation of length n, Assignation with enforced constraints
     """
-    # Compute the components implied by constrained (without any distance)
-    if kernel_approx:
-        initializer = InitializationScale(classes, constraint_matrix)
-    else:
-        initializer = Initialization(classes, constraint_matrix)
-
     def compute_assignation(weights):
         # Compute new kernel
         if kernel_approx:
@@ -47,18 +37,7 @@ def kernel_clustering(kernels, classes, constraint_matrix,
             kernel = np.sum(w * k for k, w in zip(kernels, weights))
             
         # Computation assignation
-        farthest_init = initializer.farthest_initialization(kernel)
-        if kernel_approx:
-            # Kernel approximation
-            if farthest_init is None:
-                farthest_init = 'k-means++'
-                n_init = 10
-            else:
-                n_init = 1
-            assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel).labels_
-        else:
-            assignation = kernelKmeans(kernel, farthest_init, max_iteration = 300)
-
+        assignation = clustering.fit_transform(kernel)
         return assignation
     
     # Computes initial score of each kernels

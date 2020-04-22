@@ -2,18 +2,16 @@ import numpy as np
 from utils.utils import print_verbose
 from GPyOpt.methods import BayesianOptimization
 from sklearn.metrics.pairwise import cosine_similarity
-import utils.constraint
-from models.kkmeans import kernelKmeans
-from KernelConstrainedKmeans.initialization import Initialization
+import utils.constraint as constraint
 
-def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0):
+def cosine_bayes_clustering(data, clustering, constraint_matrix, bayes_iter = 1000, verbose = 0):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the KTA score on the observed constraints computed with Kmeans
 
         Arguments:
             data {Array n * f} -- Data
-            classes {int} -- Number of clusters to form
+            clustering {Clustering} -- Clustering algo to use
             constraint_matrix {Array n * n} -- Constraint matrix with value between -1 and 1 
                 Positive values represent must link points
                 Negative values represent should not link points
@@ -28,9 +26,6 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
     """
     # Number features
     features = data.shape[1]
-
-    # Compute the components implied by constrained (without any distance)
-    initializer = Initialization(classes, constraint_matrix)
 
     global assignations, step
     assignations, step = {}, 0
@@ -54,8 +49,7 @@ def cosine_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000,
                 kernel = cosine_similarity(transformed)
 
                 # Computation assignation
-                assignment = initializer.farthest_initialization(kernel)
-                assignations[step] = kernelKmeans(kernel, assignment, max_iteration = 100, verbose = verbose)
+                assignations[step] = clustering.fit_transform(kernel)
                 
                 # Computation score on observed constraints
                 kta_score.append(constraint.kta_score(constraint_matrix, assignations[step]))

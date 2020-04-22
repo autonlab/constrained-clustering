@@ -49,12 +49,22 @@ names, kernels = normalize_and_check_kernels(names, kernels, ncluster, n_jobs = 
 
 #### Run Kmeans and opitmization
 ```
-assignment = kernel_clustering(kernels, ncluster, constraint)
+from utils.clustering import Clustering
+clustering = Clustering.create("kmeans", classes = ncluster, constraint_matrix = constraint)
+assignment = kernel_clustering(kernels, clustering, constraint)
 ```
 
 ### Use Mahalanobius 
 ```
 from models.mahalanobis import mahalanobis_bayes_clustering
 
-assignment = mahalanobis_bayes_clustering(data, ncluster, constraint)
+assignment = mahalanobis_bayes_clustering(data, clustering, constraint)
+```
+
+## Not sure about cluster number ?
+Use DBSCAN instead
+```
+from utils.clustering import Clustering
+clustering = Clustering.create("dbscan", classes = ncluster, constraint_matrix = constraint)
+assignment = kernel_clustering(kernels, clustering, constraint)
 ```

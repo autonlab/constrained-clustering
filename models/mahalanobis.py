@@ -1,21 +1,19 @@
-import utils.constraint
+import utils.constraint as constraint
 import numpy as np
 from utils.utils import print_verbose
 from hyperopt import hp, tpe, fmin
-from sklearn.cluster import KMeans
-from models.kkmeans import kernelKmeans
+from utils.clustering import Clustering
 from GPyOpt.methods import BayesianOptimization
 from sklearn.metrics.pairwise import linear_kernel
-from KernelConstrainedKmeans.initialization import Initialization, InitializationScale
 
-def mahalanobis_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 1000, verbose = 0, scale = True):
+def mahalanobis_bayes_clustering(data, clustering, constraint_matrix, bayes_iter = 1000, verbose = 0, scale = True):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the constraint satisfaction on the observed constraints computed with constrained Kmeans
 
         Arguments:
             data {Array n * f} -- Data
-            classes {int} -- Number of clusters to form
+            clustering {Clustering} -- Clustering algo to use
             constraint_matrix {Array n * n} -- Constraint matrix with value between -1 and 1 
                 Positive values represent must link points
                 Negative values represent should not link points
@@ -31,8 +29,6 @@ def mahalanobis_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 
     # Number features
     features = data.shape[1]
 
-    # Compute the components implied by constrained (without any distance)
-    initializer = InitializationScale(classes, constraint_matrix)
     if scale:
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
@@ -52,15 +48,7 @@ def mahalanobis_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 
             else:
                 kernel_approx = np.multiply(data, weights_features)
 
-                # Computation assignation
-                farthest_init = initializer.farthest_initialization(kernel_approx)
-                if farthest_init is None:
-                    farthest_init = 'k-means++'
-                    n_init = 10
-                else:
-                    n_init = 1
-                assignations[step] = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
-                
+                assignations[step] = clustering.fit_transform(kernel_approx)  
                 score.append(constraint.kta_score(constraint_matrix, assignations[step]))
 
                 print_verbose("Step {}".format(step), verbose, level = 1)
@@ -84,14 +72,14 @@ def mahalanobis_bayes_clustering(data, classes, constraint_matrix, bayes_iter = 
 
     return assignations[np.nanargmin(myBopt.Y)]
 
-def mahalanobis_tpe_clustering(data, classes, constraint_matrix, iterations = 1000, verbose = 0,scale = True):
+def mahalanobis_tpe_clustering(data, clustering, constraint_matrix, iterations = 1000, verbose = 0,scale = True):
     """
         Bayesian optimization on the space of combinasions of the given kernels
         With maximization of the constraint satisfaction on the observed constraints computed with constrained Kmeans
 
         Arguments:
             data {Array n * f} -- Data
-            classes {int} -- Number of clusters to form
+            clustering {Clustering} -- Clustering algo to use
             constraint_matrix {Array n * n} -- Constraint matrix with value between -1 and 1 
                 Positive values represent must link points
                 Negative values represent should not link points
@@ -107,8 +95,6 @@ def mahalanobis_tpe_clustering(data, classes, constraint_matrix, iterations = 10
     # Number features
     features = data.shape[1]
 
-    # Compute the components implied by constrained (without any distance)
-    initializer = InitializationScale(classes, constraint_matrix)
     if scale:
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
@@ -126,14 +112,7 @@ def mahalanobis_tpe_clustering(data, classes, constraint_matrix, iterations = 10
             # Compute new kernel
             kernel_approx = np.multiply(data, weights)
 
-            # Computation assignation
-            farthest_init = initializer.farthest_initialization(kernel_approx)
-            if farthest_init is None:
-                farthest_init = 'k-means++'
-                n_init = 10
-            else:
-                n_init = 1
-            assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
+            assignation = clustering.fit_transform(kernel_approx)
             kta = constraint.kta_score(constraint_matrix, assignation)
 
             print_verbose("\t Alpha  : {}".format(weights), verbose, level = 1)
@@ -153,14 +132,4 @@ def mahalanobis_tpe_clustering(data, classes, constraint_matrix, iterations = 10
 
     # Compute new kernel
     kernel_approx = np.multiply(data, beta_best)
-
-    # Computation assignation
-    farthest_init = initializer.farthest_initialization(kernel_approx)
-    if farthest_init is None:
-        farthest_init = 'k-means++'
-        n_init = 10
-    else:
-        n_init = 1
-    assignation = KMeans(n_clusters = classes, init = farthest_init, n_init = n_init, algorithm = 'elkan').fit(kernel_approx).labels_
-
-    return assignation
+    return clustering.fit_transform(kernel_approx)
