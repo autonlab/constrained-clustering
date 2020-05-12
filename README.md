@@ -29,7 +29,7 @@ import numpy as np
 
 dname = 'data' # Data name - Used for saving kernels
 ncluster = 3 # Number cluster
-data = pd.read_csv(dname)
+data = pd.read_csv(dname).values
 constraint = np.full((len(data), len(data)), 1) # Constraint matrix : +1 if linked, -1 otherwise - Prefer coomatrix
 ```
 
