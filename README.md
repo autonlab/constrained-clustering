@@ -3,7 +3,9 @@ Repository for comparison of constraint clustering algorithms.
 
 ## Structure
 In order to reproduce the experiment execute the norebook `Experiments.ipynb` and then `Visualizations.ipynb` which allows to analyze the results and compare the different methods.  
-All the other functions contains functions used for the clustering. 
+All the other functions contains functions used for the clustering.  
+
+`Example - MNIST.ipynb` applies our algorithm on the MNIST dataset.
 
 ## Dependencies
 This code has been executed with `python3` with the library indicated in `requirements.txt`. Additionaly, it is necessary to have R installed with the library `conclust`.
@@ -48,10 +50,10 @@ names, kernels = produce_kernels(dname, kernels_name, data, n_jobs = n_jobs)
 names, kernels = normalize_and_check_kernels(names, kernels, ncluster, n_jobs = n_jobs, **kernel_args)
 ```
 
-#### Run Kmeans and opitmization
+#### Run Kmeans and optimization
 ```
 from utils.clustering import Clustering
-clustering = Clustering.create("kmeans", classes = ncluster, constraint_matrix = constraint)
+clustering = Clustering.create("kernelKmeans", classes = ncluster, constraint_matrix = constraint)
 assignment = kernel_clustering(kernels, clustering, constraint)
 ```
 
@@ -62,10 +64,23 @@ from models.mahalanobis import mahalanobis_bayes_clustering
 assignment = mahalanobis_bayes_clustering(data, clustering, constraint)
 ```
 
-## Not sure about cluster number ?
+### Not sure about cluster number ?
 Use DBSCAN instead
 ```
 from utils.clustering import Clustering
 clustering = Clustering.create("dbscan", classes = ncluster, constraint_matrix = constraint)
 assignment = kernel_clustering(kernels, clustering, constraint)
+```
+
+### Large datasets ?
+Use the kernel approximation, by computing the following kernels:
+```
+kernel_args = {"normalize": "approximation"}
+
+names, kernels = produce_kernels(dname, kernels_name, data, n_jobs = n_jobs, approximation = True) # DO NOT FORGET THIS OPTION
+names, kernels = normalize_and_check_kernels(names, kernels, ncluster, n_jobs = n_jobs, **kernel_args)
+```
+And executing this version of the algorithm
+```
+assignment = kernel_clustering(kernels, clustering, constraint, kernel_approx = True) # DO NOT FORGET THIS OPTION
 ```
