@@ -1,6 +1,6 @@
 [submodule "KernelConstrainedKmeans"]
 	path = KernelConstrainedKmeans
-	url = https://github.com/Jeanselme/KernelConstrainedKmeans.git
+	url = git@github.com:Jeanselme/KernelConstrainedKmeans.git
 [submodule "SemiSupervisedGraphClustering"]
 	path = SemiSupervisedGraphClustering
-	url = https://github.com/Jeanselme/SemiSupervisedGraphClustering.git
+	url = git@github.com:Jeanselme/SemiSupervisedGraphClustering.git
