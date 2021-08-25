@@ -7,4 +7,3 @@ rpy2
 GPyOpt
 jupyter
 tqdm
-pmlb==0.3
