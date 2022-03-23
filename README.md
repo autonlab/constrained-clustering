@@ -1,5 +1,5 @@
 # Constraint Satisfaction Clustering
-This repository contains the code for comparing constrained clustering algorithms and reproduces the result from [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](). 
+This repository contains the code for comparing constrained clustering algorithms and reproduces the results in [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](). 
 
 If you use our code, please cite
 
