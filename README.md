@@ -1,17 +1,9 @@
-# ConstrainedClustering
-Repository for comparison of constraint clustering algorithms. 
-
-## Dependencies
-This code has been executed with `python3` with the library indicated in `requirements.txt`. Additionaly, it is necessary to have R installed with the library `conclust`.
-For setting up the environment:
-```
-conda create --name clustering
-conda install -f -y -q --name clustering -c conda-forge --file requirements.txt
-conda activate clustering
-pip install pmlb==0.3 metric-learn==0.4.0 hyperopt
-```
+# Constrained Clustering
+This repository contains the code for comparing constraint clustering algorithms and reproduces the result from [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](). 
 
 ## How to run our model on your dataset ?
+
+`Example - MNIST.ipynb` provides a complete example on how to use the contrained clustering algorithms on the MNIST dataset.
 
 ### Kernel Clustering
 #### Open your data and constraints
@@ -75,3 +67,27 @@ And executing this version of the algorithm
 ```
 assignment = kernel_clustering(kernels, clustering, constraint, kernel_approx = True) # DO NOT FORGET THIS OPTION
 ```
+
+## Dependencies
+This code has been executed with `python3` with the library indicated in `requirements.txt`. Additionaly, it is necessary to have R installed with the library `conclust`.
+For setting up the environment:
+```
+conda create --name clustering
+conda install -f -y -q --name clustering -c conda-forge --file requirements.txt
+conda activate clustering
+pip install pmlb==0.3 metric-learn==0.4.0 hyperopt
+```
+
+## Repository structure
+
+### `data_files` and `kernel_files`
+Any computed kernels and downloaded data will be saved in these directories
+
+### `kernels`
+This folder contains all functions relevant to the computation and normalization of kernels
+
+### `models`
+Contains all the proposed appraoch to constrained clustering.
+
+### `utils`
+Contains additional function for constraint completion, evaluation and optimization.
