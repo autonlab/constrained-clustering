@@ -13,14 +13,15 @@ Benedikt Boecking, Vincent Jeanselme, and Artur Dubrawski. arXiv preprint, 2022
 
 ### Constraint Satisfaction Clustering
 #### Loading data and constraints
-Constraints are represented as a sparse matrix, with +1 for most-link constraints, and -1 for cannot-link constraints.
+Constraints are represented as a sparse matrix, with +1 for must-link constraints and -1 for cannot-link constraints, and 0 otherwise. 
 ```
 import pandas as pd
 import numpy as np
 
-dname = 'data' # Data name - Used for saving kernels
+dname = 'data' # Dataset name - Used for saving kernels
 ncluster = 3 # Number of clusters
 data = pd.read_csv(dname).values
+# see 'Example - MNIST.ipynb' for a more detailed example of how constraint matrices should be created
 constraint = np.full((len(data), len(data)), 1) # Constraint matrix : +1 if linked, -1 otherwise - Prefer coomatrix
 ```
 
@@ -46,7 +47,7 @@ clustering = Clustering.create("kernelKmeans", classes = ncluster, constraint_ma
 assignment = kernel_clustering(kernels, clustering, constraint)
 ```
 
-### Learn a Mahalanobis distance instead, MahalanobisCSC 
+### Learn a Mahalanobis distance instead (MahalanobisCSC)
 ```
 from models.mahalanobis import mahalanobis_bayes_clustering
 
@@ -75,7 +76,7 @@ assignment = kernel_clustering(kernels, clustering, constraint, kernel_approx = 
 ```
 
 ## Dependencies
-This code has been executed with `python3` with the library indicated in `requirements.txt`. Additionaly, it is necessary to have R installed with the library `conclust`.
+This code has been executed with `python3` with the dependencies indicated in `requirements.txt`. Additionaly, it is necessary to have R installed with the library `conclust`.
 For setting up the environment:
 ```
 conda create --name clustering
