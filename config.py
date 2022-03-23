@@ -6,11 +6,11 @@ time = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
 
 print("Ran on {}".format(time))
 
-if 'int.autonlab.org' in socket.gethostname():
+if 'server' in socket.gethostname():
     print("Server")
-    datadir = "/zfsauton/data/public/vjeanselme/PennData/"
-    kerneldir = "/zfsauton/data/public/vjeanselme/PennKernelsPaper/"
-    result = "/zfsauton/data/public/vjeanselme/PennResultsPaper/"
+    datadir = ""
+    kerneldir = ""
+    result = ""
 else:
     print("Local")
     local = os.getcwd()
