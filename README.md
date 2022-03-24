@@ -1,10 +1,12 @@
 # Constraint Satisfaction Clustering
-This repository contains the code for comparing constrained clustering algorithms and reproduces the results in [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](). 
+This repository contains the code for comparing constrained clustering algorithms and reproduces the results in [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](https://arxiv.org/abs/2203.12546). 
 
 If you use our code, please cite
 
-> [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation]()\
-Benedikt Boecking, Vincent Jeanselme, and Artur Dubrawski. arXiv preprint, 2022
+> [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](https://arxiv.org/abs/2203.12546)\
+Benedikt Boecking, Vincent Jeanselme, and Artur Dubrawski. \
+arXiv preprint,\
+arXiv:2203.12546 (2022)
 
 
 ## How to run our model on your dataset ?
