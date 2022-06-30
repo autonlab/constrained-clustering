@@ -5,8 +5,9 @@ If you use our code, please cite
 
 > [Constrained Clustering and Multiple Kernel Learning without Pairwise Constraint Relaxation](https://arxiv.org/abs/2203.12546)\
 Benedikt Boecking, Vincent Jeanselme, and Artur Dubrawski. \
-arXiv preprint,\
-arXiv:2203.12546 (2022)
+Advances in Data Analysis and Classification (2022)\
+[[arXiv]](https://arxiv.org/abs/2203.12546) [[Springer]](https://doi.org/10.1007/s11634-022-00507-5)
+
 
 
 ## How to run our model on your dataset ?
